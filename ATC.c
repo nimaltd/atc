@@ -38,25 +38,21 @@ void	ATC_TransmitString(ATC_t *atc,char *Buff)
 	}
 }
 //###################################################################################
-uint8_t	ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,...)
+uint8_t	ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...)
 {
 	while(atc->Busy)
 		osDelay(1);
 	atc->Busy=1;
-	int8_t cnt=0;
 	atc->AnswerFound=0;
 	va_list tag;
-	va_start (tag,Wait_ms);
+	va_start (tag,ArgCount);
 	char *arg[_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER];
 	memset(arg,0,sizeof(arg));
-	for(uint8_t i=0; i<_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER ; i++)
+	for(uint8_t i=0; i<ArgCount ; i++)
 	{
 		arg[i] = va_arg (tag, char*);	
-		if(arg[i]!=NULL)
-			cnt++;
   }
-	cnt--;
-	for(uint8_t i=0; i<cnt ; i++)
+	for(uint8_t i=0; i<ArgCount ; i++)
 		strncpy(atc->Answer[i],arg[i],sizeof(atc->Answer[i]));
   va_end (tag);
 	#if(_ATC_DEBUG==1)
