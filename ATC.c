@@ -10,7 +10,7 @@ void 	        StartATCBuffTask(void const *argument);
 //###################################################################################
 void	ATC_RxCallBack(ATC_t *atc)
 {
-	if(atc->uart.ErrorCode==0)
+	if((atc->uart.ErrorCode==0) && (atc->Buff.RxBusy==0))
 	{
 		atc->Buff.RxTime=HAL_GetTick();
 		if(atc->Buff.RxIndex < atc->Buff.RxSize-1)
@@ -85,6 +85,32 @@ uint8_t	ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,...)
 	return 0;
 }
 //###################################################################################
+bool	ATC_AddAutoSearchString(ATC_t *atc,char *String)
+{
+	if(String==NULL)
+		return false;
+	if(atc->AutoSearchIndex == _ATC_MAX_AUTO_SEARCH_STRING-1)
+		return false;
+	atc->AutoSearchString[atc->AutoSearchIndex] = calloc(strlen(String)+1,1);
+	if(atc->AutoSearchString[atc->AutoSearchIndex]==NULL)
+		return false;
+	strcpy(atc->AutoSearchString[atc->AutoSearchIndex],String);
+	atc->AutoSearchIndex++;	
+	return true;
+}
+//###################################################################################
+void	ATC_AutoSearch(ATC_t *atc)
+{
+	for(uint16_t	idx=0 ; idx<atc->AutoSearchIndex ; idx++)
+	{
+		char *str = strstr((char*)atc->Buff.RxData,atc->AutoSearchString[idx]);
+		if(str!=NULL)
+		{
+			ATC_User_AutoSearchCallBack(atc,idx,atc->AutoSearchString[idx],str);
+		}		
+	}	
+}
+//###################################################################################
 bool	ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority)
 {
 	memset(atc,0,sizeof(&atc));
@@ -141,6 +167,7 @@ void StartATCBuffTask(void const *argument)
 				HAL_UART_Receive_IT(&ATC[MX]->uart,&ATC[MX]->Buff.RxTmp,1);				
 				if((ATC[MX]->Buff.RxIndex>0) && (HAL_GetTick()-ATC[MX]->Buff.RxTime>ATC[MX]->Buff.Timeout))
 				{
+					ATC[MX]->Buff.RxBusy=1;
 					//++++++	Search in atcommands answer
 					for(uint8_t answ=0 ; answ<_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER ; answ++)
 					{
@@ -153,12 +180,16 @@ void StartATCBuffTask(void const *argument)
 							}							
 						}						
 					}					
-					//------ Search in atcommands answer
+					//------ 	Search in atcommands answer
+					//++++++	Auto Search String
+					ATC_AutoSearch(ATC[MX]);
+					//------	Auto Search String
 					#if (_ATC_DEBUG==1)
 					printf("[%s] RxBuffer:\r\n %s\r\n",ATC[MX]->Name,(char*)ATC[MX]->Buff.RxData);
 					#endif
 					memset(ATC[MX]->Buff.RxData,0,ATC[MX]->Buff.RxSize);
 					ATC[MX]->Buff.RxIndex=0;
+					ATC[MX]->Buff.RxBusy=0;
 				}
 			}		
 		}
