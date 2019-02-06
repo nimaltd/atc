@@ -18,7 +18,7 @@ void StartDefaultTask(void const * argument)
 	ATC_AddAutoSearchString(&ATC_Bluetooth,"Always search this string2");
 	ATC_AddAutoSearchString(&ATC_Bluetooth,"Always search this string3");
 	osDelay(3000);
-	ATC_Send(&ATC_Bluetooth,"AT\r\n",1000,"OK\r\n");
+	ATC_Send(&ATC_Bluetooth,"AT\r\n",1000,2,"OK\r\n","ERROR\r\n");
   for(;;)
   {
 	osDelay(3000);
