@@ -81,18 +81,18 @@ uint8_t	ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,..
 	return 0;
 }
 //###################################################################################
-bool	ATC_AddAutoSearchString(ATC_t *atc,char *String)
+uint16_t	ATC_AddAutoSearchString(ATC_t *atc,char *String)
 {
 	if(String==NULL)
-		return false;
+		return 0;
 	if(atc->AutoSearchIndex == _ATC_MAX_AUTO_SEARCH_STRING-1)
-		return false;
+		return 0;
 	atc->AutoSearchString[atc->AutoSearchIndex] = calloc(strlen(String)+1,1);
 	if(atc->AutoSearchString[atc->AutoSearchIndex]==NULL)
-		return false;
+		return 0;
 	strcpy(atc->AutoSearchString[atc->AutoSearchIndex],String);
 	atc->AutoSearchIndex++;	
-	return true;
+	return atc->AutoSearchIndex;
 }
 //###################################################################################
 void	ATC_AutoSearch(ATC_t *atc)
@@ -135,16 +135,19 @@ bool	ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSiz
 		}		
 		ATC_ID++;
 		ATC[ATC_ID] = atc;
-		osThreadDef(ATCBuffTask, StartATCBuffTask, Priority, 0, 256);
-		ATCBuffTaskHandle = osThreadCreate(osThread(ATCBuffTask), NULL);
-		if(ATCBuffTaskHandle==NULL)
+		if(ATC_ID==0)
 		{
-			#if(_ATC_DEBUG==1)
-			printf("[%s] Init Faild, Could not create task!\r\n",atc->Name);
-			#endif
-			memset(atc,0,sizeof(&atc));
-			return false;
-		}		
+			osThreadDef(ATCBuffTask, StartATCBuffTask, Priority, 0, 256);
+			ATCBuffTaskHandle = osThreadCreate(osThread(ATCBuffTask), NULL);
+			if(ATCBuffTaskHandle==NULL)
+			{
+				#if(_ATC_DEBUG==1)
+				printf("[%s] Init Faild, Could not create task!\r\n",atc->Name);
+				#endif
+				memset(atc,0,sizeof(&atc));
+				return false;
+			}		
+		}
 		#if(_ATC_DEBUG==1)
 		printf("[%s] Init Done\r\n",atc->Name);
 		#endif
@@ -180,8 +183,8 @@ void StartATCBuffTask(void const *argument)
 					//++++++	Auto Search String
 					ATC_AutoSearch(ATC[MX]);
 					//------	Auto Search String
-					#if (_ATC_DEBUG==1)
-					printf("[%s] RxBuffer:\r\n %s\r\n",ATC[MX]->Name,(char*)ATC[MX]->Buff.RxData);
+					#if (_ATC_DEBUG==2)
+					printf("[%s]\r\n%s\r\n",ATC[MX]->Name,(char*)ATC[MX]->Buff.RxData);
 					#endif
 					memset(ATC[MX]->Buff.RxData,0,ATC[MX]->Buff.RxSize);
 					ATC[MX]->Buff.RxIndex=0;

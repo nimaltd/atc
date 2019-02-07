@@ -40,14 +40,24 @@ typedef struct
 
 
 //###################################################################################
-void		ATC_RxCallBack(ATC_t *atc);
-void		ATC_User_AutoSearchCallBack(ATC_t *atc,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer);
 
-bool		ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority);
+//				add to Uart interrupt after HAL_UART_IRQHandler(&huartx);
+void			ATC_RxCallBack(ATC_t *atc);
 
-void		ATC_TransmitString(ATC_t *atc,char *Buff);
-uint8_t	ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...);//=0 timeout			>0 parameter number found   
-bool		ATC_AddAutoSearchString(ATC_t *atc,char *String);
+//				osPriority effect only for call first time
+bool			ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority);
+
+//				tranmit string
+void			ATC_TransmitString(ATC_t *atc,char *Buff);
+
+//				send AtCommand and wait for answer. return 0 timeout,return	>0 parameter number found   
+uint8_t		ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...);
+
+//				Add Always search strings
+uint16_t	ATC_AddAutoSearchString(ATC_t *atc,char *String);
+
+//				when found a string, call this function automatically. in "ATCUser.c"
+void			ATC_User_AutoSearchCallBack(ATC_t *atc,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer);
 
 //###################################################################################
 
