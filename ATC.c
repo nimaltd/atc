@@ -2,11 +2,11 @@
 #include "ATC.h"
 #include "ATCConfig.h"
 
-int8_t				ATC_ID=-1;
-ATC_t					*ATC[_ATC_MAX_DEVICE];
+int8_t        ATC_ID=-1;
+ATC_t         *ATC[_ATC_MAX_DEVICE];
 
-osThreadId 		ATCBuffTaskHandle;
-void 	        StartATCBuffTask(void const *argument);
+osThreadId    ATCBuffTaskHandle;
+void          StartATCBuffTask(void const *argument);
 //###################################################################################
 void	ATC_RxCallBack(ATC_t *atc)
 {
