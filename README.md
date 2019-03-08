@@ -1,4 +1,22 @@
 # ATC  AT Command
+<br />
+I use Stm32f407vg and Keil Compiler and Stm32CubeMX wizard.
+ <br />
+Please Do This ...
+<br />
+<br />
+1) Enable FreeRTOS.  
+<br />
+2) Config your usart and enable RX interrupt (TX DMA is optional) on CubeMX.
+<br />
+3) Select "General peripheral Initalizion as a pair of '.c/.h' file per peripheral" on project settings.
+<br />
+4) Config your ATCConfig.h file.
+<br />
+5) Add  ATC_RxCallBack(ATC_t *atc) on usart interrupt routin. 
+<br />
+7) call  ATC_Init(&ATC_handle,"name",huart2,512,10,osPriorityLow) on your task.
+<br />
 
 example :
 ```
