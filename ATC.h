@@ -25,15 +25,17 @@ typedef struct
 //########
 typedef struct
 {
-	uint8_t               ID;
-	uint8_t               Busy;
-	char                  Name[16];
-	UART_HandleTypeDef    uart;
-	ATC_Buff_t            Buff;	
-	char                  Answer[_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER][32];
-	uint8_t               AnswerFound;
-	uint8_t               AutoSearchIndex;
-	char                  *AutoSearchString[_ATC_MAX_AUTO_SEARCH_STRING];
+  uint8_t               ID;
+  uint8_t               Busy;
+  char                  Name[16];
+  UART_HandleTypeDef    uart;
+  ATC_Buff_t            Buff;	
+  char                  Answer[_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER][32];
+  uint8_t               AnswerFound;
+  uint8_t               AutoSearchIndex;
+  char                  *AutoSearchString[_ATC_MAX_AUTO_SEARCH_STRING];
+  GPIO_TypeDef          *RS485_Ctrl_GPIO;
+  uint16_t              RS485_Ctrl_Pin;
   
 }ATC_t;
 //########
@@ -46,6 +48,9 @@ void      ATC_RxCallBack(ATC_t *atc);
 
 //        osPriority effect only for call first time
 bool      ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority);
+
+//        Call if use RS485 control RX_TX Pin
+void      ATC_InitRS485(ATC_t *atc,GPIO_TypeDef *RS485_GPIO,uint16_t RS485_PIN);
 
 //        tranmit string
 void      ATC_TransmitString(ATC_t *atc,char *Buff);

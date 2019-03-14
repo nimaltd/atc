@@ -24,6 +24,11 @@ void  ATC_RxCallBack(ATC_t *atc)
 //###################################################################################
 void  ATC_TransmitString(ATC_t *atc,char *Buff)
 {
+  if(atc->RS485_Ctrl_Pin != 0)
+  {
+    HAL_GPIO_WritePin(atc->RS485_Ctrl_GPIO,atc->RS485_Ctrl_Pin,GPIO_PIN_SET);
+    osDelay(1);  
+  }
   if(atc->uart.hdmatx!=NULL)
   {
     while(atc->uart.hdmatx->State != HAL_DMA_STATE_READY)
@@ -35,6 +40,11 @@ void  ATC_TransmitString(ATC_t *atc,char *Buff)
   else
   {
     HAL_UART_Transmit(&atc->uart,(uint8_t*)Buff,strlen(Buff),100);    
+  }
+  if(atc->RS485_Ctrl_Pin != 0)
+  {
+    HAL_GPIO_WritePin(atc->RS485_Ctrl_GPIO,atc->RS485_Ctrl_Pin,GPIO_PIN_RESET);
+    osDelay(1);  
   }
 }
 //###################################################################################
@@ -153,6 +163,16 @@ bool  ATC_Init(ATC_t *atc,char  *Name,UART_HandleTypeDef SelectUart,uint16_t  Rx
     #endif
     return true;
   }
+}
+//###################################################################################
+void ATC_InitRS485(ATC_t *atc,GPIO_TypeDef *RS485_GPIO,uint16_t RS485_PIN)
+{
+  atc->RS485_Ctrl_GPIO = RS485_GPIO;
+  atc->RS485_Ctrl_Pin = RS485_PIN;  
+  HAL_GPIO_WritePin(atc->RS485_Ctrl_GPIO,atc->RS485_Ctrl_Pin,GPIO_PIN_RESET);
+  #if(_ATC_DEBUG==1)
+  printf("[%s] Init ATC RS485 Done\r\n",atc->Name);
+  #endif
 }
 //###################################################################################
 void StartATCBuffTask(void const *argument)
