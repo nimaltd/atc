@@ -19,7 +19,7 @@ void  ATC_RxCallBack(ATC_t *atc)
       atc->Buff.RxIndex++;
     }    
   }
-  HAL_UART_Receive_IT(&huart2,&atc->Buff.RxTmp,1);
+  HAL_UART_Receive_IT(&atc->uart,&atc->Buff.RxTmp,1);
 }
 //###################################################################################
 void  ATC_TransmitString(ATC_t *atc,char *Buff)
@@ -134,7 +134,7 @@ bool  ATC_Init(ATC_t *atc,char  *Name,UART_HandleTypeDef SelectUart,uint16_t  Rx
   }
   else  
   {
-    HAL_UART_Receive_IT(&huart2,&atc->Buff.RxTmp,1);
+    HAL_UART_Receive_IT(&atc->uart,&atc->Buff.RxTmp,1);
     if(ATC_ID>=_ATC_MAX_DEVICE)
     {
       #if(_ATC_DEBUG==1)

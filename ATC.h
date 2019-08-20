@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdarg.h>
 #include "ATCConfig.h"
 #include "usart.h"
