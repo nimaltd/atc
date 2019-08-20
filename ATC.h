@@ -29,7 +29,7 @@ typedef struct
   uint8_t               ID;
   uint8_t               Busy;
   char                  Name[16];
-  UART_HandleTypeDef    uart;
+  UART_HandleTypeDef    *uart;
   ATC_Buff_t            Buff;	
   char                  Answer[_ATC_MAX_SEARCH_PARAMETER_FOR_AT_ANSWER][32];
   uint8_t               AnswerFound;
@@ -41,29 +41,28 @@ typedef struct
 }ATC_t;
 //########
 
-
 //###################################################################################
 
 //        add to Uart interrupt after HAL_UART_IRQHandler(&huartx);
-void      ATC_RxCallBack(ATC_t *atc);
+void      ATC_RxCallBack(uint8_t  ID);
 
 //        osPriority effect only for call first time
-bool      ATC_Init(ATC_t *atc,char	*Name,UART_HandleTypeDef SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority);
+bool      ATC_Init(uint8_t  ID,char	*Name,UART_HandleTypeDef *SelectUart,uint16_t	RxSize,uint8_t	Timeout_Package,osPriority Priority);
 
 //        Call if use RS485 control RX_TX Pin
-void      ATC_InitRS485(ATC_t *atc,GPIO_TypeDef *RS485_GPIO,uint16_t RS485_PIN);
+void      ATC_InitRS485(uint8_t  ID,GPIO_TypeDef *RS485_GPIO,uint16_t RS485_PIN);
 
 //        tranmit string
-void      ATC_TransmitString(ATC_t *atc,char *Buff);
+void      ATC_TransmitString(uint8_t  ID,char *Buff);
 
 //        send AtCommand and wait for answer. return 0 timeout,return	>0 parameter number found   
-uint8_t   ATC_Send(ATC_t *atc,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...);
+uint8_t   ATC_Send(uint8_t  ID,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...);
 
 //        Add Always search strings
-uint16_t  ATC_AddAutoSearchString(ATC_t *atc,char *String);
+uint16_t  ATC_AddAutoSearchString(uint8_t  ID,char *String);
 
 //        when found a string, call this function automatically. in "ATCUser.c"
-void      ATC_User_AutoSearchCallBack(ATC_t *atc,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer);
+void      ATC_User_AutoSearchCallBack(uint8_t  ID,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer);
 
 //###################################################################################
 
