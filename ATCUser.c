@@ -1,8 +1,7 @@
 
 #include "ATC.h"
-#include "functions.h"
 
-void		ATC_User_AutoSearchCallBack(ATC_t *atc,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer)
+void    ATC_User_AutoSearchCallBack(uint8_t  ID,uint16_t	FoundIndex,char *FoundString,char *ATC_rxDataPointer)
 {
  
 }
