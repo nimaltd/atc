@@ -35,7 +35,10 @@ void StartDefaultTask(void const * argument)
 	ATC_AddAutoSearchString(0,"Always search this string2");
 	ATC_AddAutoSearchString(0,"Always search this string3");
 	osDelay(3000);
-	ATC_Send(0,"AT\r\n",1000,2,"OK\r\n","ERROR\r\n");
+	if(ATC_Send(0,"AT\r\n",1000,2,"\r\nOK\r\n","\r\nERROR\r\n") == 1)
+	{
+	   // find "\r\nOK\r\n	
+	}
   	for(;;)
   	{
 		osDelay(3000);
