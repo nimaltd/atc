@@ -7,6 +7,7 @@ ATC_t         ATC[_ATC_MAX_DEVICE];
 
 osThreadId    ATCBuffTaskHandle;
 void          StartATCBuffTask(void const *argument);
+
 //###################################################################################
 void  ATC_RxCallBack(uint8_t  ID)
 {
@@ -98,6 +99,11 @@ uint8_t  ATC_Send(uint8_t  ID,char *AtCommand,uint32_t Wait_ms,uint8_t  ArgCount
   return 0;
 }
 //###################################################################################
+char *     ATC_GetAnswer(uint8_t ID)
+{
+  return (char*)ATC[ID].Buff.RxDataBackup;  
+}
+//###################################################################################
 uint16_t  ATC_AddAutoSearchString(uint8_t  ID,char *String)
 {
   if(ID>=_ATC_MAX_DEVICE)
@@ -123,6 +129,9 @@ void  ATC_AutoSearch(uint8_t  ID)
     char *str = strstr((char*)ATC[ID].Buff.RxData,ATC[ID].AutoSearchString[idx]);
     if(str!=NULL)
     {
+      #if(_ATC_DEBUG==1)
+      printf("[%s] Found Auto index: %d: String:%s\r\n",ATC[ID].Name,idx,ATC[ID].AutoSearchString[idx]);
+      #endif
       ATC_User_AutoSearchCallBack(ID,idx,ATC[ID].AutoSearchString[idx],str);
     }    
   }  
@@ -140,10 +149,11 @@ bool  ATC_Init(uint8_t  ID,char  *Name,UART_HandleTypeDef *SelectUart,uint16_t  
   memset(&ATC[ID],0,sizeof(ATC[ID]));
   ATC[ID].uart = SelectUart;
   strncpy(ATC[ID].Name,Name,sizeof(ATC[ID].Name));
-  ATC[ID].Buff.RxData = calloc(RxSize,1);
+  ATC[ID].Buff.RxData = pvPortMalloc(RxSize);
+  ATC[ID].Buff.RxDataBackup = pvPortMalloc(RxSize);
   ATC[ID].Buff.RxSize=RxSize;
   ATC[ID].Buff.Timeout=Timeout_Package;    
-  if(ATC[ID].Buff.RxData==NULL)
+  if((ATC[ID].Buff.RxData==NULL) || (ATC[ID].Buff.RxDataBackup==NULL))
   {
     #if(_ATC_DEBUG==1)
     printf("[%s] Init Faild, Could not create struct!\r\n",ATC[ID].Name);
@@ -205,6 +215,8 @@ void StartATCBuffTask(void const *argument)
               if(strstr((char*)ATC[MX].Buff.RxData,ATC[MX].Answer[answ])!=NULL)
               {
                 ATC[MX].AnswerFound=answ+1;
+                memset(ATC[MX].Buff.RxDataBackup,0,ATC[MX].Buff.RxSize);
+                strcpy((char*)ATC[MX].Buff.RxDataBackup,(char*)ATC[MX].Buff.RxData);
                 break;
               }              
             }            

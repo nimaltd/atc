@@ -15,6 +15,7 @@
 typedef struct
 {
 	uint8_t		*RxData;
+  uint8_t		*RxDataBackup;
 	uint8_t		RxTmp;
 	uint16_t	RxIndex;
 	uint16_t	RxSize;
@@ -57,6 +58,9 @@ void      ATC_TransmitString(uint8_t  ID,char *Buff);
 
 //        send AtCommand and wait for answer. return 0 timeout,return	>0 parameter number found   
 uint8_t   ATC_Send(uint8_t  ID,char *AtCommand,uint32_t Wait_ms,uint8_t	ArgCount,...);
+
+//        get rx buffer after send AtCommands
+char*     ATC_GetAnswer(uint8_t ID);
 
 //        Add Always search strings
 uint16_t  ATC_AddAutoSearchString(uint8_t  ID,char *String);
