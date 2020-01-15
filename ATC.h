@@ -15,7 +15,7 @@
 typedef struct
 {
 	uint8_t		*RxData;
-  uint8_t		*RxDataBackup;
+  	uint8_t		*RxDataBackup;
 	uint8_t		RxTmp;
 	uint16_t	RxIndex;
 	uint16_t	RxSize;
