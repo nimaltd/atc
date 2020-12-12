@@ -23,8 +23,27 @@
 * Enable USART (LL Library) and RX interrupt.
 * Add library to your project.
 * Configure `atcCongig.h` file.
-* Create a struct as global. ex: atc_t atc; . 
-* Select `General peripheral Initalizion as a pair of '.c/.h' file per peripheral` on project settings.
-* Config `gsmConfig.h`.
-* Call `gsm_init(osPriotary_low)` in your task. 
+* Create a struct as global.
+* Create found callback function if you need it.
+* Call `atc_init()`.
+* Call `atc_loop()` in infinit loop.
+```
+#include "atc.h"
+atc_t  atc;
+
+void  atc_found(char *foundStr)
+{
+
+}
+
+int main()
+{
+  atc_init(&atc, "MY_ATC", USART1, atc_found);
+  while (1)
+  {
+    atc_loop(&atc);
+  }  
+}
+```
+
 
