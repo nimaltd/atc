@@ -22,7 +22,7 @@
 --------------------------------------------------------------------------------   
 * Enable USART (LL Library) and RX interrupt.
 * Add library to your project.
-* Configure `atcCongig.h` file.
+* Configure `atcConfig.h` file.
 * Create a struct as global.
 * Create found callback function if you need it.
 * Call `atc_init()`.
