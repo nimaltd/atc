@@ -26,6 +26,7 @@
 * Create a struct as global.
 * Create found callback function if you need it.
 * Call `atc_init()`.
+* You could add always search strings now.
 * Call `atc_loop()` in infinit loop.
 ```
 #include "atc.h"
@@ -33,12 +34,16 @@ atc_t  atc;
 
 void  atc_found(char *foundStr)
 {
-
+  if (strstr(foundStr, "\r\n+CMD:") != NULL)
+  {
+  
+  }
 }
 
 int main()
 {
   atc_init(&atc, "MY_ATC", USART1, atc_found);
+  atc_addSearch(&atc, "\r\n+CMD:");
   while (1)
   {
     atc_loop(&atc);
