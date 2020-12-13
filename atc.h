@@ -38,19 +38,19 @@ extern "C" {
 
 typedef struct
 {
-	bool					inited;
-	uint8_t				rxBuffer[_ATC_RXSIZE];
-	uint16_t			rxIndex;
-	uint32_t			rxTime;
-	uint32_t			loopTime;
-	char					*search[_ATC_SEARCH_MAX];
-	char					*searchCmd[_ATC_SEARCH_CMD_MAX];
-	uint8_t				searchIndex;
+	bool          inited;
+	uint8_t       rxBuffer[_ATC_RXSIZE];
+	uint16_t      rxIndex;
+	uint32_t      rxTime;
+	uint32_t      loopTime;
+	char          *search[_ATC_SEARCH_MAX];
+	char          *searchCmd[_ATC_SEARCH_CMD_MAX];
+	uint8_t       searchIndex;
 	char          name[8];
 
-	bool					lock;
-	USART_TypeDef	*usart;
-	void					(*found)(char *foundStr);
+	bool          lock;
+	USART_TypeDef *usart;
+	void          (*found)(char *foundStr);
 
 }atc_t;
 
@@ -83,7 +83,7 @@ void atc_loop(atc_t *atc);
  * false: out of memory
  * true: succeed
  */
-bool atc_addSearch(atc_t *atc, const char *str);	//	add always search string
+bool atc_addSearch(atc_t *atc, const char *str);
 //###############################################################################################################
 /*
  * transmit data
