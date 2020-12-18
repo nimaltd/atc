@@ -4,18 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#if (_ATC_RTOS == 0)
-#define atc_delay(x)  HAL_Delay(x)
-#else
-#define atc_delay(x)  osDelay(x)
-#endif
-
-
-#if (_ATC_DEBUG == 1)
-#define	atc_printf(...)     printf(__VA_ARGS__)
-#else
-#define	atc_printf(...)     {};
-#endif
 //####################################################################################################
 void *atc_alloc(size_t size)
 {
