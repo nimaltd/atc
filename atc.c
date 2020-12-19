@@ -1,11 +1,15 @@
-
 #include "atc.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 
+#if (_ATC_DEBUG == 1)
+#define	atc_printf(...)     printf(__VA_ARGS__)
+#else
+#define	atc_printf(...)     {};
+#endif
 //####################################################################################################
-void *atc_alloc(size_t size)
+void* atc_alloc(size_t size)
 {
 #if (_ATC_RTOS == 0)
   return malloc(size);
@@ -37,7 +41,7 @@ void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found)
   atc_printf("\r\n[%s] inited.\r\n", atc->name);
 }
 //####################################################################################################
-bool atc_lock(atc_t *atc, uint32_t	wait_ms)
+bool atc_lock(atc_t *atc, uint32_t wait_ms)
 {
   if (atc->lock == false)
   {
@@ -62,9 +66,9 @@ void atc_unlock(atc_t *atc)
   atc->lock = false;
 }
 //####################################################################################################
-void atc_transmit(atc_t *atc, uint8_t* data, uint16_t len)
+void atc_transmit(atc_t *atc, uint8_t *data, uint16_t len)
 {
-  for(uint16_t i = 0; i<len; i++)
+  for (uint16_t i = 0; i < len; i++)
   {
     while (!LL_USART_IsActiveFlag_TXE(atc->usart))
       atc_delay(1);
@@ -94,7 +98,7 @@ void atc_search(atc_t *atc)
   {
     if (atc->search[search] == NULL)
       break;
-    char *str = strstr((char*)atc->rxBuffer, atc->search[search]);
+    char *str = strstr((char*) atc->rxBuffer, atc->search[search]);
     if (str != NULL)
     {
       if (atc->found != NULL)
@@ -103,7 +107,7 @@ void atc_search(atc_t *atc)
   }
 }
 //####################################################################################################
-char*	atc_searchAnswer(atc_t *atc, uint8_t items, uint8_t *foundIndex)
+char* atc_searchAnswer(atc_t *atc, uint8_t items, uint8_t *foundIndex)
 {
   *foundIndex = 0;
   if (items >= _ATC_SEARCH_CMD_MAX)
@@ -112,7 +116,7 @@ char*	atc_searchAnswer(atc_t *atc, uint8_t items, uint8_t *foundIndex)
   {
     if (atc->searchCmd[search] == NULL)
       break;
-    char *str = strstr((char*)atc->rxBuffer, atc->searchCmd[search]);
+    char *str = strstr((char*) atc->rxBuffer, atc->searchCmd[search]);
     if (str != NULL)
     {
       *foundIndex = search + 1;
@@ -144,14 +148,15 @@ bool atc_addSearch(atc_t *atc, const char *str)
   {
     strncpy(atc->search[atc->searchIndex], str, strlen(str));
     atc->search[atc->searchIndex][strlen(str)] = 0;
-    atc->searchIndex ++;
+    atc->searchIndex++;
     return true;
   }
   else
     return false;
 }
 //####################################################################################################
-int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size, uint8_t items, ...)
+int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size,
+    uint8_t items, ...)
 {
   if (atc->inited == false)
     return -1;
@@ -159,11 +164,11 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
     return -1;
   uint8_t foundIndex = 0;
   va_list tag;
-  va_start (tag, items);
+  va_start(tag, items);
   for (uint8_t i = 0; i < items; i++)
   {
-    char *str = va_arg (tag, char*);
-    atc->searchCmd[i] = (char* )atc_alloc(strlen(str) + 1);
+    char *str = va_arg(tag, char*);
+    atc->searchCmd[i] = (char*) atc_alloc(strlen(str) + 1);
     if (atc->searchCmd[i] != NULL)
     {
       strcpy(atc->searchCmd[i], str);
@@ -173,14 +178,14 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
       break;
   }
   va_end(tag);
-  atc_transmit(atc, (uint8_t*)command, strlen(command));
+  atc_transmit(atc, (uint8_t*) command, strlen(command));
   uint32_t start = HAL_GetTick();
   while (HAL_GetTick() - start < timeout_ms)
   {
     atc_delay(_ATC_RXTIMEOUT_MS / 2);
     if (atc_available(atc))
     {
-      atc_printf("[%s] %s", atc->name, (char*)atc->rxBuffer);
+      atc_printf("[%s] %s", atc->name, (char* )atc->rxBuffer);
       atc_search(atc);
       char *found = atc_searchAnswer(atc, items, &foundIndex);
       if (found != NULL && answer != NULL)
@@ -217,7 +222,7 @@ void atc_loop(atc_t *atc)
     return;
   if (atc_available(atc))
   {
-    atc_printf("[%s] %s", atc->name, (char*)atc->rxBuffer);
+    atc_printf("[%s] %s", atc->name, (char* )atc->rxBuffer);
     atc_search(atc);
     atc_empty(atc);
   }

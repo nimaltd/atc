@@ -1,4 +1,3 @@
-
 #ifndef _ATC_H_
 #define _ATC_H_
 
@@ -27,44 +26,35 @@ extern "C" {
 #include "main.h"
 #include "atcConfig.h"
 
-#if (_ATC_RTOS == 1)
-#include "cmsis_os.h"
-#include "freertos.h"
-#endif
-#if (_ATC_RTOS == 2)
-#include "cmsis_os2.h"
-#include "freertos.h"
-#endif
-	
 #if (_ATC_RTOS == 0)
 #define atc_delay(x)  HAL_Delay(x)
+#elif (_ATC_RTOS == 1)
+#include "cmsis_os.h"
+#include "freertos.h"
+#define atc_delay(x)  osDelay(x)
 #else
+#include "cmsis_os2.h"
+#include "freertos.h"
 #define atc_delay(x)  osDelay(x)
 #endif
 
-#if (_ATC_DEBUG == 1)
-#define	atc_printf(...)     printf(__VA_ARGS__)
-#else
-#define	atc_printf(...)     {};
-#endif
-	
 typedef struct
 {
-	bool          inited;
-	uint8_t       rxBuffer[_ATC_RXSIZE];
-	uint16_t      rxIndex;
-	uint32_t      rxTime;
-	uint32_t      loopTime;
-	char          *search[_ATC_SEARCH_MAX];
-	char          *searchCmd[_ATC_SEARCH_CMD_MAX];
-	uint8_t       searchIndex;
-	char          name[8];
+  bool inited;
+  uint8_t rxBuffer[_ATC_RXSIZE];
+  uint16_t rxIndex;
+  uint32_t rxTime;
+  uint32_t loopTime;
+  char *search[_ATC_SEARCH_MAX];
+  char *searchCmd[_ATC_SEARCH_CMD_MAX];
+  uint8_t searchIndex;
+  char name[8];
 
-	bool          lock;
-	USART_TypeDef *usart;
-	void          (*found)(char *foundStr);
+  bool lock;
+  USART_TypeDef *usart;
+  void (*found)(char *foundStr);
 
-}atc_t;
+} atc_t;
 
 //###############################################################################################################
 /*
@@ -103,7 +93,7 @@ bool atc_addSearch(atc_t *atc, const char *str);
  * data: send pointer
  * len: data length
  */
-void atc_transmit(atc_t *atc, uint8_t* data, uint16_t len);
+void atc_transmit(atc_t *atc, uint8_t *data, uint16_t len);
 //###############################################################################################################
 /*
  * send at-command function
@@ -119,7 +109,8 @@ void atc_transmit(atc_t *atc, uint8_t* data, uint16_t len);
  * 	0:	not found
  * 	>0:	found answer index
  */
-int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size, uint8_t items, ...);
+int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size,
+    uint8_t items, ...);
 //###############################################################################################################
 
 #ifdef __cplusplus
