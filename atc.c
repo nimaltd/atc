@@ -89,7 +89,16 @@ void atc_rxCallback(atc_t *atc)
       atc->rxIndex++;
     }
     atc->rxTime = HAL_GetTick();
+    return;
   }
+//  if (LL_USART_IsActiveFlag_PE(atc->usart))
+//    LL_USART_ClearFlag_PE(atc->usart);
+//  if (LL_USART_IsActiveFlag_FE(atc->usart))
+//    LL_USART_ClearFlag_FE(atc->usart);
+//  if (LL_USART_IsActiveFlag_ORE(atc->usart))
+//    LL_USART_ClearFlag_ORE(atc->usart);
+//  if (LL_USART_IsActiveFlag_NE(atc->usart))
+//    LL_USART_ClearFlag_NE(atc->usart);
 }
 //####################################################################################################
 void atc_search(atc_t *atc)
@@ -156,7 +165,7 @@ bool atc_addSearch(atc_t *atc, const char *str)
 }
 //####################################################################################################
 int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size,
-    uint8_t items, ...)
+    int items, ...)
 {
   if (atc->inited == false)
     return -1;
@@ -182,7 +191,7 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
   uint32_t start = HAL_GetTick();
   while (HAL_GetTick() - start < timeout_ms)
   {
-    atc_delay(_ATC_RXTIMEOUT_MS / 2);
+    atc_delay(1);
     if (atc_available(atc))
     {
       atc_printf("[%s] %s", atc->name, (char* )atc->rxBuffer);

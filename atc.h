@@ -10,11 +10,12 @@
  */
 
 /*
- * Version:	3.0.0
+ * Version:	3.0.1
  *
  * History:
  *
- * (3.0.0):	Rewrite again. Support NONE-RTOS, RTOS V1 and RTOS V2
+ * (3.0.1):	Change some defines.
+ * (3.0.0):	Rewrite again. Support NONE-RTOS, RTOS V1 and RTOS V2.
  */
 
 #ifdef __cplusplus
@@ -28,13 +29,8 @@ extern "C" {
 
 #if (_ATC_RTOS == 0)
 #define atc_delay(x)  HAL_Delay(x)
-#elif (_ATC_RTOS == 1)
-#include "cmsis_os.h"
-#include "freertos.h"
-#define atc_delay(x)  osDelay(x)
 #else
-#include "cmsis_os2.h"
-#include "freertos.h"
+#include "cmsis_os.h"
 #define atc_delay(x)  osDelay(x)
 #endif
 
@@ -110,7 +106,7 @@ void atc_transmit(atc_t *atc, uint8_t *data, uint16_t len);
  * 	>0:	found answer index
  */
 int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *answer, uint16_t answer_size,
-    uint8_t items, ...);
+    int items, ...);
 //###############################################################################################################
 
 #ifdef __cplusplus
