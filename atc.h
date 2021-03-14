@@ -10,10 +10,11 @@
  */
 
 /*
- * Version:	3.0.1
+ * Version:	3.0.2
  *
  * History:
  *
+ * (3.0.2):	Clear answer buffer before use.
  * (3.0.1):	Change some defines.
  * (3.0.0):	Rewrite again. Support NONE-RTOS, RTOS V1 and RTOS V2.
  */

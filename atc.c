@@ -171,6 +171,8 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
     return -1;
   if (atc_lock(atc, timeout_ms) == false)
     return -1;
+  if (answer != NULL)
+    memset(answer, 0, answer_size);
   uint8_t foundIndex = 0;
   va_list tag;
   va_start(tag, items);
