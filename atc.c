@@ -8,6 +8,7 @@
 #else
 #define	atc_printf(...)     {};
 #endif
+uint8_t tmp;
 //####################################################################################################
 void* atc_alloc(size_t size)
 {
@@ -28,7 +29,11 @@ void atc_free(void *ptr)
 #endif
 }
 //####################################################################################################
+#ifdef HAL_MODULE_ENABLED
+void atc_init(atc_t *atc, const char *name, UART_HandleTypeDef *USARTx, void *found)
+#elif
 void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found)
+#endif
 {
   if (atc->inited == true)
     return;
@@ -36,7 +41,10 @@ void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found)
   strncpy(atc->name, name, sizeof(atc->name) - 1);
   atc->usart = USARTx;
   atc->found = found;
+#ifdef HAL_MODULE_ENABLED
+#elif
   LL_USART_EnableIT_RXNE(atc->usart);
+#endif
   atc->inited = true;
   atc_printf("\r\n[%s] inited.\r\n", atc->name);
 }
@@ -68,6 +76,10 @@ void atc_unlock(atc_t *atc)
 //####################################################################################################
 void atc_transmit(atc_t *atc, uint8_t *data, uint16_t len)
 {
+#ifdef HAL_MODULE_ENABLED
+    HAL_UART_Transmit_IT(atc->usart,data,len);
+	atc_delay(1);
+#elif
   for (uint16_t i = 0; i < len; i++)
   {
     while (!LL_USART_IsActiveFlag_TXE(atc->usart))
@@ -76,13 +88,23 @@ void atc_transmit(atc_t *atc, uint8_t *data, uint16_t len)
   }
   while (!LL_USART_IsActiveFlag_TC(atc->usart))
     atc_delay(1);
+#endif
 }
 //####################################################################################################
 void atc_rxCallback(atc_t *atc)
 {
+#ifdef HAL_MODULE_ENABLED
+    if (atc->rxIndex < _ATC_RXSIZE - 1)
+    {
+      atc->rxBuffer[atc->rxIndex] = tmp;
+      atc->rxIndex++;
+    }
+    atc->rxTime = HAL_GetTick();
+    HAL_UART_Receive_IT(atc->usart,&tmp,1);
+#elif
   if (LL_USART_IsActiveFlag_RXNE(atc->usart))
   {
-    uint8_t tmp = LL_USART_ReceiveData8(atc->usart);
+    tmp = LL_USART_ReceiveData8(atc->usart);
     if (atc->rxIndex < _ATC_RXSIZE - 1)
     {
       atc->rxBuffer[atc->rxIndex] = tmp;
@@ -99,6 +121,7 @@ void atc_rxCallback(atc_t *atc)
 //    LL_USART_ClearFlag_ORE(atc->usart);
 //  if (LL_USART_IsActiveFlag_NE(atc->usart))
 //    LL_USART_ClearFlag_NE(atc->usart);
+#endif
 }
 //####################################################################################################
 void atc_search(atc_t *atc)
