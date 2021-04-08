@@ -8,7 +8,6 @@
 #else
 #define	atc_printf(...)     {};
 #endif
-uint8_t tmp;
 //####################################################################################################
 void* atc_alloc(size_t size)
 {
@@ -96,18 +95,18 @@ void atc_rxCallback(atc_t *atc)
 #ifdef HAL_MODULE_ENABLED
     if (atc->rxIndex < _ATC_RXSIZE - 1)
     {
-      atc->rxBuffer[atc->rxIndex] = tmp;
+      atc->rxBuffer[atc->rxIndex] = atc->tmp;
       atc->rxIndex++;
     }
     atc->rxTime = HAL_GetTick();
-    HAL_UART_Receive_IT(atc->usart,&tmp,1);
+    HAL_UART_Receive_IT(atc->usart, &atc->tmp, 1);
 #elif
   if (LL_USART_IsActiveFlag_RXNE(atc->usart))
   {
-    tmp = LL_USART_ReceiveData8(atc->usart);
+    atc->tmp = LL_USART_ReceiveData8(atc->usart);
     if (atc->rxIndex < _ATC_RXSIZE - 1)
     {
-      atc->rxBuffer[atc->rxIndex] = tmp;
+      atc->rxBuffer[atc->rxIndex] = atc->tmp;
       atc->rxIndex++;
     }
     atc->rxTime = HAL_GetTick();
