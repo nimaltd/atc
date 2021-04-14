@@ -46,6 +46,7 @@ typedef struct
   char *search[_ATC_SEARCH_MAX];
   char *searchCmd[_ATC_SEARCH_CMD_MAX];
   uint8_t searchIndex;
+  uint8_t tmp;
   char name[8];
 
   bool lock;
