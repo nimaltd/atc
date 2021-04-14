@@ -10,11 +10,10 @@
  */
 
 /*
- * Version:	3.0.3
+ * Version:	3.0.2
  *
  * History:
  *
- * (3.0.3):	Added check for HAL && LL.
  * (3.0.2):	Clear answer buffer before use.
  * (3.0.1):	Change some defines.
  * (3.0.0):	Rewrite again. Support NONE-RTOS, RTOS V1 and RTOS V2.
@@ -46,15 +45,10 @@ typedef struct
   char *search[_ATC_SEARCH_MAX];
   char *searchCmd[_ATC_SEARCH_CMD_MAX];
   uint8_t searchIndex;
-  uint8_t tmp;
   char name[8];
 
   bool lock;
-#ifdef HAL_MODULE_ENABLED
-  UART_HandleTypeDef *usart;
-#elif
   USART_TypeDef *usart;
-#endif
   void (*found)(char *foundStr);
 
 } atc_t;
@@ -66,11 +60,7 @@ typedef struct
  *  USARTx: selected USART
  *  found: atc found function. auto called after found strings you added before. do not use atc_command function into this
  */
-#ifdef HAL_MODULE_ENABLED
-void atc_init(atc_t *atc, const char *name, UART_HandleTypeDef *USARTx, void *found);
-#elif
 void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found);
-#endif
 //###############################################################################################################
 /*
  * put in usart rx interrupt
