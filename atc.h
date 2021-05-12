@@ -10,10 +10,11 @@
  */
 
 /*
- * Version:	3.0.2
+ * Version:	3.0.3
  *
  * History:
  *
+ * (3.0.3): Remove warning.
  * (3.0.2):	Clear answer buffer before use.
  * (3.0.1):	Change some defines.
  * (3.0.0):	Rewrite again. Support NONE-RTOS, RTOS V1 and RTOS V2.
@@ -60,7 +61,7 @@ typedef struct
  *  USARTx: selected USART
  *  found: atc found function. auto called after found strings you added before. do not use atc_command function into this
  */
-void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found);
+void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void (*found)(char*));
 //###############################################################################################################
 /*
  * put in usart rx interrupt

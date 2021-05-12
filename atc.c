@@ -28,7 +28,7 @@ void atc_free(void *ptr)
 #endif
 }
 //####################################################################################################
-void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void *found)
+void atc_init(atc_t *atc, const char *name, USART_TypeDef *USARTx, void (*found)(char*))
 {
   if (atc->inited == true)
     return;
