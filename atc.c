@@ -20,7 +20,6 @@ void* atc_alloc(size_t size)
 //####################################################################################################
 void atc_free(void *ptr)
 {
-  if (ptr != NULL)
 #if (_ATC_RTOS == 0)
     free(ptr);
 #else
@@ -207,7 +206,10 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
     }
   }
   for (uint8_t i = 0; i < items; i++)
+  {
     atc_free(atc->searchCmd[i]);
+    atc->searchCmd[i] = NULL;
+  }
   atc_unlock(atc);
   return foundIndex;
 }
