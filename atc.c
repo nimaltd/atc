@@ -5,6 +5,9 @@
 
 #if (_ATC_DEBUG == 1)
 #define	atc_printf(...)     printf(__VA_ARGS__)
+#elif (_ATC_DEBUG == 2)
+#include "SEGGER_RTT.h"
+#define	atc_printf(...)    SEGGER_RTT_printf(0, __VA_ARGS__)
 #else
 #define	atc_printf(...)     {};
 #endif
