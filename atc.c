@@ -108,7 +108,7 @@ void atc_search(atc_t *atc)
   for (uint8_t search = 0; search < _ATC_SEARCH_MAX; search++)
   {
     if (atc->search[search] == NULL)
-      break;
+      continue;
     char *str = strstr((char*) atc->rxBuffer, atc->search[search]);
     if (str != NULL)
     {
@@ -121,10 +121,13 @@ void atc_search(atc_t *atc)
 char* atc_searchAnswer(atc_t *atc, uint8_t items, uint8_t *foundIndex)
 {
   *foundIndex = 0;
-  if (items >= _ATC_SEARCH_CMD_MAX)
-    items = _ATC_SEARCH_CMD_MAX;
   for (uint8_t search = 0; search < items; search++)
   {
+    if (search == _ATC_SEARCH_CMD_MAX)
+    {
+      atc_printf("[%s] Error: Search command limit reached", atc->name);
+      break;
+    }
     if (atc->searchCmd[search] == NULL)
       break;
     char *str = strstr((char*) atc->rxBuffer, atc->searchCmd[search]);
@@ -152,8 +155,11 @@ bool atc_available(atc_t *atc)
 //####################################################################################################
 bool atc_addSearch(atc_t *atc, const char *str)
 {
-  if (atc->searchIndex == _ATC_SEARCH_MAX - 1)
+  if (atc->searchIndex == _ATC_SEARCH_MAX)
+  {
+    atc_printf("[%s] Error: Search limit reached", atc->name);
     return false;
+  }
   atc->search[atc->searchIndex] = (char*) atc_alloc(strlen(str) + 1);
   if (atc->search[atc->searchIndex] != NULL)
   {
@@ -180,6 +186,11 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
   va_start(tag, items);
   for (uint8_t i = 0; i < items; i++)
   {
+    if (i == _ATC_SEARCH_CMD_MAX)
+    {
+      atc_printf("[%s] Error: Search command limit reached", atc->name);
+      break;
+    }
     char *str = va_arg(tag, char*);
     atc->searchCmd[i] = (char*) atc_alloc(strlen(str) + 1);
     if (atc->searchCmd[i] != NULL)
@@ -187,8 +198,6 @@ int8_t atc_command(atc_t *atc, const char *command, uint32_t timeout_ms, char *a
       strcpy(atc->searchCmd[i], str);
       atc->searchCmd[i][strlen(str)] = 0;
     }
-    if (items >= _ATC_SEARCH_CMD_MAX)
-      break;
   }
   va_end(tag);
   atc_transmit(atc, (uint8_t*) command, strlen(command));
