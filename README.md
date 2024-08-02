@@ -1,54 +1,30 @@
-## at-command library 
-*	Author:     Nima Askari
-*	WebSite:    https://www.github.com/NimaLTD
-*	Instagram:  https://www.instagram.com/github.NimaLTD
-*	LinkedIn:   https://www.linkedin.com/in/NimaLTD
-*	Youtube:    https://www.youtube.com/channel/UCUhY7qY1klJm1d2kulr9ckw 
---------------------------------------------------------------------------------
-* [x] NONE RTOS Supported.
-* [x] RTOS V1 Supported.
-* [x] RTOS V2 Supported.
---------------------------------------------------------------------------------
-* [ ] F0 tested.
-* [ ] L0 tested.
-* [x] F1 tested.
-* [ ] L1 tested.
-* [ ] F2 tested.
-* [ ] F3 tested.
-* [ ] F4 tested.
-* [x] L4 tested.
-* [ ] F7 tested.
-* [ ] H7 tested.
---------------------------------------------------------------------------------   
-* Enable USART (LL Library) and RX interrupt.
-* Add library to your project.
-* Configure `atcConfig.h` file.
-* Create a struct as global.
-* Create found callback function if you need it.
-* Call `atc_init()`.
-* You could add always search strings now.
-* Call `atc_loop()` in infinit loop.
-```
-#include "atc.h"
-atc_t  atc;
+# SPI FLASH Library for STM32  
+---  
+## Please Do not Forget to get STAR, DONATE and support me on social networks. Thank you. :sparkling_heart:  
+---   
+-  Author:     Nima Askari  
+-  Github:     https://www.github.com/NimaLTD
+-  Youtube:    https://www.youtube.com/@nimaltd  
+-  LinkedIn:   https://www.linkedin.com/in/nimaltd  
+-  Instagram:  https://instagram.com/github.NimaLTD  
+---  
+- I have tested on w25q64. please test other devices and tell me.
+---
+* Install Library from https://github.com/nimaltd/STM32-PACK/raw/main/SPIF/NimaLTD.I-CUBE-SPIF.pdsc
+* Add and enable it.
+* Enable SPI and a GPIO as output-pushpull (CS pin).Connect WP and HOLD to VCC.
+* Select 'Generate peripheral initialization as a pair of .c/.h files per peripheral' on the Code Generator Tab.
+* Generate Code.
+* Define a structure of `SPIF_HandleTypeDef`.
+* Call `SPIF_Init()` and enjoy.
+---
+# Watch the Video:
 
-void  atc_found(char *foundStr)
-{
-  if (strstr(foundStr, "\r\n+CMD:") != NULL)
-  {
-  
-  }
-}
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=_baNId6cDi4"><img src="https://img.youtube.com/vi/_baNId6cDi4/0.jpg" alt="Video"></a>
+</div>
 
-int main()
-{
-  atc_init(&atc, "MY_ATC", USART1, atc_found);
-  atc_addSearch(&atc, "\r\n+CMD:");
-  while (1)
-  {
-    atc_loop(&atc);
-  }  
-}
-```
+---
+The old Version: https://github.com/nimaltd/SPIF/archive/refs/tags/1.20.0.zip 
 
 
