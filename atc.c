@@ -246,10 +246,6 @@ bool ATC_Init(ATC_HandleTypeDef *hAtc, UART_HandleTypeDef *hUart, uint16_t Buffe
     {
       break;
     }
-    if (hAtc->hUart != NULL)
-    {
-      break;
-    }
     memset(hAtc, 0, sizeof(ATC_HandleTypeDef));
     if (pName != NULL)
     {

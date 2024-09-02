@@ -9,9 +9,12 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.0.0
+  Version:    4.0.1
 
   History:
+              4.0.1
+              - Fixed Initialization 
+			  
               4.0.0
               - Rewrite again
               - Working with RX/TX DMA, Less CPU load
