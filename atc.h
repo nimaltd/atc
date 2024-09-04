@@ -14,7 +14,7 @@
   History:
               4.0.1
               - Fixed Initialization 
-			  - Chenged ATC_Delay function to public
+              - Moved ATC_Delay to public
 			  
               4.0.0
               - Rewrite again
