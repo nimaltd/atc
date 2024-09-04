@@ -14,6 +14,7 @@
   History:
               4.0.1
               - Fixed Initialization 
+			  - Chenged ATC_Delay function to public
 			  
               4.0.0
               - Rewrite again
@@ -37,6 +38,17 @@ extern "C"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdarg.h>
+
+#if ATC_RTOS == ATC_RTOS_DISABLE
+#elif ATC_RTOS == ATC_RTOS_CMSIS_V1
+#include "cmsis_os.h"
+#include "freertos.h"
+#elif ATC_RTOS == ATC_RTOS_CMSIS_V2
+#include "cmsis_os2.h"
+#include "freertos.h"
+#elif ATC_RTOS == ATC_RTOS_THREADX
+#include "app_threadx.h"
+#endif
 
 /************************************************************************************************************
 **************    Public Definitions
@@ -83,6 +95,7 @@ void    ATC_Loop(ATC_HandleTypeDef *hAtc);
 int     ATC_SendWaitReceive(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout, char *pResp, uint32_t RxTimeout, ...);
 
 void    ATC_IdleLineCallback(ATC_HandleTypeDef *hAtc, uint16_t Len);
+void    ATC_Delay(uint32_t Delay);
 
 #ifdef __cplusplus
 }

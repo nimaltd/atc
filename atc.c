@@ -14,17 +14,6 @@
 #define dprintf(...) printf(__VA_ARGS__)
 #endif
 
-#if ATC_RTOS == ATC_RTOS_DISABLE
-#elif ATC_RTOS == ATC_RTOS_CMSIS_V1
-#include "cmsis_os.h"
-#include "freertos.h"
-#elif ATC_RTOS == ATC_RTOS_CMSIS_V2
-#include "cmsis_os2.h"
-#include "freertos.h"
-#elif ATC_RTOS == ATC_RTOS_THREADX
-#include "app_threadx.h"
-#endif
-
 /************************************************************************************************************
 **************    Private Definitions
 ************************************************************************************************************/
@@ -51,25 +40,6 @@ bool              ATC_TxWait(ATC_HandleTypeDef *hAtc, uint32_t Timeout);
 void              ATC_CheckEvents(ATC_HandleTypeDef *hAtc);
 uint8_t           ATC_CheckResponse(ATC_HandleTypeDef *hAtc, char *pFound);
 void              ATC_CheckErrors(ATC_HandleTypeDef *hAtc);
-
-/***********************************************************************************************************/
-
-void ATC_Delay(uint32_t Delay)
-{
-#if ATC_RTOS == ATC_RTOS_DISABLE
-  HAL_Delay(Delay);
-#elif (ATC_RTOS == ATC_RTOS_CMSIS_V1) || (ATC_RTOS == ATC_RTOS_CMSIS_V2)
-  uint32_t d = (configTICK_RATE_HZ * Delay) / 1000;
-  if (d == 0)
-      d = 1;
-  osDelay(d);
-#elif ATC_RTOS == ATC_RTOS_THREADX
-  uint32_t d = (TX_TIMER_TICKS_PER_SECOND * Delay) / 1000;
-  if (d == 0)
-    d = 1;
-  tx_thread_sleep(d);
-#endif
-}
 
 /***********************************************************************************************************/
 
@@ -486,4 +456,28 @@ inline void ATC_IdleLineCallback(ATC_HandleTypeDef *hAtc, uint16_t Len)
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
     dprintf("[%s] ERROR ENABLE RX DMA\r\n", hAtc->Name);
   }
+}
+
+/***********************************************************************************************************/
+
+/**
+  * @brief  Delay function.
+  * @param  Delay: delay in milisecond..
+  * @retval None.
+  */
+void ATC_Delay(uint32_t Delay)
+{
+#if ATC_RTOS == ATC_RTOS_DISABLE
+  HAL_Delay(Delay);
+#elif (ATC_RTOS == ATC_RTOS_CMSIS_V1) || (ATC_RTOS == ATC_RTOS_CMSIS_V2)
+  uint32_t d = (configTICK_RATE_HZ * Delay) / 1000;
+  if (d == 0)
+      d = 1;
+  osDelay(d);
+#elif ATC_RTOS == ATC_RTOS_THREADX
+  uint32_t d = (TX_TIMER_TICKS_PER_SECOND * Delay) / 1000;
+  if (d == 0)
+    d = 1;
+  tx_thread_sleep(d);
+#endif
 }
