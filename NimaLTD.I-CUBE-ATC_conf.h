@@ -24,8 +24,7 @@
 #endif
 
 #define ATC_DEBUG_DISABLE                    0
-#define ATC_DEBUG_MIN                        1
-#define ATC_DEBUG_FULL                       2
+#define ATC_DEBUG_ENABLE                     1
 
 #define ATC_RTOS_DISABLE                     0
 #define ATC_RTOS_CMSIS_V1                    1
@@ -34,10 +33,10 @@
 
 /**
 	MiddleWare name : NimaLTD.I-CUBE-ATC.4.0.0
-	MiddleWare fileName : ./NimaLTD.I-CUBE-ATC_conf.h
+	MiddleWare fileName : NimaLTD.I-CUBE-ATC_conf.h
 */
 /*---------- ATC_DEBUG  -----------*/
-#define ATC_DEBUG      ATC_DEBUG_DISABLE
+#define ATC_DEBUG      ATC_DEBUG_ENABLE
 
 /*---------- ATC_RTOS  -----------*/
 #define ATC_RTOS      ATC_RTOS_DISABLE

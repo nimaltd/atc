@@ -9,12 +9,18 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.0.1
-
+  Version:    4.1.0
   History:
+              4.1.0
+              - Added ATC_Send and ATC_Receive functions
+              - Changed declaration
+
+              4.0.2
+              - Fixed Debug Printing
+			  
               4.0.1
               - Fixed Initialization 
-              - Moved ATC_Delay to public
+              - Changed ATC_Delay function to public
 			  
               4.0.0
               - Rewrite again
@@ -54,7 +60,9 @@ extern "C"
 **************    Public Definitions
 ************************************************************************************************************/
 
-#define ATC_RESP_MEM_ERROR        -2
+#define ATC_RESP_TX_BUSY          -4
+#define ATC_RESP_MEM_ERROR        -3
+#define ATC_RESP_SENDING_TIMEOUT  -2
 #define ATC_RESP_SENDING_ERROR    -1
 #define ATC_RESP_NOT_FOUND        0
 
@@ -64,23 +72,24 @@ extern "C"
 
 typedef struct
 {
-  char                       *Event;
-  void                       (*EventCallback)(const char *);
+  char*                      Event;
+  void                       (*EventCallback)(const char*);
 
 } ATC_EventTypeDef;
 
 typedef struct
 {
-  UART_HandleTypeDef         *hUart;
+  UART_HandleTypeDef*        hUart;
   char                       Name[8];
   uint16_t                   Size;
   uint16_t                   RespCount;
   uint16_t                   RxIndex;
   uint16_t                   TxLen;
-  ATC_EventTypeDef           *sEvents;
-  uint8_t                    *pRxBuff;
-  uint8_t                    *pReadBuff;
-  uint8_t                    **ppResp;
+  ATC_EventTypeDef*          sEvents;
+  uint8_t*                   pRxBuff;
+  uint8_t*                   pTxBuff;
+  uint8_t*                   pReadBuff;
+  uint8_t**                  ppResp;
 
 } ATC_HandleTypeDef;
 
@@ -88,13 +97,15 @@ typedef struct
 **************    Public Functions
 ************************************************************************************************************/
 
-bool    ATC_Init(ATC_HandleTypeDef *hAtc, UART_HandleTypeDef *hUart, uint16_t BufferSize, char *pName);
+bool    ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t BufferSize, const char* pName);
 void    ATC_DeInit(ATC_HandleTypeDef *hAtc);
-bool    ATC_SetEvents(ATC_HandleTypeDef *hAtc, const ATC_EventTypeDef *sEvents);
-void    ATC_Loop(ATC_HandleTypeDef *hAtc);
-int     ATC_SendWaitReceive(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout, char *pResp, uint32_t RxTimeout, ...);
+bool    ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* sEvents);
+void    ATC_Loop(ATC_HandleTypeDef* hAtc);
+int     ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char* pResp, uint32_t RxTimeout, ...);
+bool    ATC_Send(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, ...);
+int     ATC_Receive(ATC_HandleTypeDef* hAtc, char* pResp, uint32_t RxTimeout, ...);
 
-void    ATC_IdleLineCallback(ATC_HandleTypeDef *hAtc, uint16_t Len);
+void    ATC_IdleLineCallback(ATC_HandleTypeDef* hAtc, uint16_t Len);
 void    ATC_Delay(uint32_t Delay);
 
 #ifdef __cplusplus
