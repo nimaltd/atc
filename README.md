@@ -15,8 +15,9 @@
 * Select 'Generate peripheral initialization as a pair of .c/.h files per peripheral' on the Code Generator Tab.
 * Generate Code.
 * Define a structure of `ATC_HandleTypeDef`.
-* Add ATC_IdleLineCallback() in the Idle Line Callback.
+* Add ATC_IdleLineCallback() in the Idle Line Callback. 
 * Call `ATC_Init()` and enjoy.
+* Add Events (optional).
 ---
 # Watch the Video:
 
