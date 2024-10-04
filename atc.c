@@ -32,7 +32,7 @@
 
 void              ATC_Delay(uint32_t Delay);
 void*             ATC_Malloc(size_t Size);
-void              ATC_Free(void* pMem);
+void              ATC_Free(void** pMem);
 void              ATC_RxFlush(ATC_HandleTypeDef* hAtc);
 bool              ATC_TxRaw(ATC_HandleTypeDef* hAtc, const uint8_t* pData, uint16_t Len);
 bool              ATC_TxBusy(ATC_HandleTypeDef* hAtc);
@@ -58,18 +58,18 @@ void* ATC_Malloc(size_t size)
 
 /***********************************************************************************************************/
 
-void ATC_Free(void* ptr)
+void ATC_Free(void** ptr)
 {
-  if (ptr != NULL)
+  if (ptr != NULL && *ptr != NULL)
   {
 #if RTOS_CONFIG == ATC_RTOS_DISABLE
-    free(ptr);
+    free(*ptr);
 #elif (ATC_RTOS == ATC_RTOS_CMSIS_V1) || (ATC_RTOS == ATC_RTOS_CMSIS_V2)
     vPortFree(ptr);
 #elif ATC_RTOS == ATC_RTOS_THREADX
     ??
 #endif
-     ptr = NULL;
+     *ptr = NULL;
   }
 }
 
@@ -197,6 +197,14 @@ void ATC_CheckErrors(ATC_HandleTypeDef* hAtc)
     HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size);
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
   }
+  if (!((HAL_UART_GetState(hAtc->hUart) == HAL_UART_STATE_BUSY_RX) ||
+      (HAL_UART_GetState(hAtc->hUart) == HAL_UART_STATE_BUSY_TX_RX)))
+  {
+    __HAL_UART_CLEAR_FLAG(hAtc->hUart, 0xFFFFFFFF);
+    HAL_UART_AbortReceive(hAtc->hUart);
+    HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size);
+    __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
+  }
 }
 
 /************************************************************************************************************
@@ -272,11 +280,11 @@ bool ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t Buffe
   {
     if (hAtc->pRxBuff != NULL)
     {
-      ATC_Free(hAtc->pRxBuff);
+      ATC_Free((void**)&hAtc->pRxBuff);
     }
     if (hAtc->pReadBuff != NULL)
     {
-      ATC_Free(hAtc->pReadBuff);
+      ATC_Free((void**)&hAtc->pReadBuff);
     }
     memset(hAtc, 0, sizeof(ATC_HandleTypeDef));
   }
@@ -306,8 +314,8 @@ void ATC_DeInit(ATC_HandleTypeDef* hAtc)
     {
       break;
     }
-    ATC_Free(hAtc->pRxBuff);
-    ATC_Free(hAtc->pReadBuff);
+    ATC_Free((void**)&hAtc->pRxBuff);
+    ATC_Free((void**)&hAtc->pReadBuff);
     memset(hAtc, 0, sizeof(ATC_HandleTypeDef));
 
   } while (0);
@@ -364,37 +372,28 @@ void ATC_Loop(ATC_HandleTypeDef* hAtc)
   * @param  TxTimeout: Timeout for sending the command.
   * @param  pResp: Pointer to the response buffer. It Can be NULL.
   * @param  RxTimeout: Timeout for receiving the response.
+  * @param  Items: Number of String for Searching
   * @param  ...: Variable arguments for expected responses.
   * @retval Response index if found, error code otherwise.
   */
-int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char* pResp, uint32_t RxTimeout, ...)
+int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char* pResp, uint32_t RxTimeout, uint8_t Items, ...)
 {
   int answer = ATC_RESP_NOT_FOUND;
-  int count = 0;
-  va_list args;
-
   if (ATC_TxBusy(hAtc) == true)
   {
     dprintf("ATC<%s> - ATC_RESP_TX_BUSY\r\n", hAtc->Name);
     return ATC_RESP_TX_BUSY;
   }
-  va_start(args, RxTimeout);
+  if (Items > ATC_RESP_MAX)
+  {
+    dprintf("ATC<%s> - ATC_RESP_ITEMS\r\n", hAtc->Name);
+    return ATC_RESP_ITEMS;
+  }
+  ATC_CheckErrors(hAtc);
+  va_list args;
   char *arg;
-  while ((arg = va_arg(args, char*)) != NULL)
-  {
-    count++;
-  }
-  va_end(args);
-
-  hAtc->ppResp = (uint8_t**) ATC_Malloc(count * sizeof(uint8_t*));
-  if (hAtc->ppResp == NULL)
-  {
-    dprintf("ATC<%s> - ATC_RESP_MEM_ERROR\r\n", hAtc->Name);
-    return ATC_RESP_MEM_ERROR;
-  }
-
-  va_start(args, RxTimeout);
-  for (int i = 0; i < count; i++)
+  va_start(args, Items);
+  for (int i = 0; i < Items; i++)
   {
     arg = va_arg(args, char*);
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
@@ -403,9 +402,8 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
       dprintf("ATC<%s> - ATC_RESP_MEM_ERROR\r\n", hAtc->Name);
       for (uint8_t j = 0; j < i; j++)
       {
-        ATC_Free(hAtc->ppResp[j]);
+        ATC_Free((void**)&hAtc->ppResp[j]);
       }
-      ATC_Free(hAtc->ppResp);
       return ATC_RESP_MEM_ERROR;
     }
     strcpy((char*) hAtc->ppResp[i], arg);
@@ -431,10 +429,10 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
 
   } while (0);
 
-  if ((count > 0) && (answer == ATC_RESP_NOT_FOUND))
+  if ((Items > 0) && (answer == ATC_RESP_NOT_FOUND))
   {
     uint32_t start_time = HAL_GetTick();
-    hAtc->RespCount = count;
+    hAtc->RespCount = Items;
     while (HAL_GetTick() - start_time < RxTimeout)
     {
       ATC_Delay(1);
@@ -452,12 +450,10 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
     }
   }
   hAtc->RespCount = 0;
-  for (uint8_t i = 0; i < count; i++)
+  for (uint8_t i = 0; i < Items; i++)
   {
-    ATC_Free(hAtc->ppResp[i]);
+    ATC_Free((void**)&hAtc->ppResp[i]);
   }
-  ATC_Free(hAtc->ppResp);
-
   return answer;
 }
 
@@ -481,6 +477,7 @@ bool ATC_Send(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout,
       dprintf("ATC<%s> - ATC_Send() TX BUSY\r\n", hAtc->Name);
       break;
     }
+    ATC_CheckErrors(hAtc);
     va_list args;
     va_start(args, TxTimeout);
     int len = vsnprintf((char*)hAtc->pTxBuff, hAtc->Size, pCommand, args);
@@ -516,31 +513,23 @@ bool ATC_Send(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout,
   * @param  hAtc: Pointer to the ATC handle.
   * @param  pResp: Pointer to the response buffer. It Can be NULL.
   * @param  RxTimeout: Timeout for sending the command.
+  * @param  Items: Number of searching strings
   * @param  ...: Variable arguments for expected responses.
   * @retval Response index if found, error code otherwise.
   */
-int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, ...)
+int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, uint8_t Items, ...)
 {
   int answer = ATC_RESP_NOT_FOUND;
-  int count = 0;
+  if (Items > ATC_RESP_MAX)
+  {
+    dprintf("ATC<%s> - ATC_RESP_ITEMS\r\n", hAtc->Name);
+    return ATC_RESP_ITEMS;
+  }
+  ATC_CheckErrors(hAtc);
   va_list args;
-  va_start(args, RxTimeout);
   char *arg;
-  while ((arg = va_arg(args, char*)) != NULL)
-  {
-    count++;
-  }
-  va_end(args);
-
-  hAtc->ppResp = (uint8_t**) ATC_Malloc(count * sizeof(uint8_t*));
-  if (hAtc->ppResp == NULL)
-  {
-    dprintf("ATC<%s> - ATC_Receive() MEM ERROR\r\n", hAtc->Name);
-    return ATC_RESP_MEM_ERROR;
-  }
-
-  va_start(args, RxTimeout);
-  for (int i = 0; i < count; i++)
+  va_start(args, Items);
+  for (int i = 0; i < Items; i++)
   {
     arg = va_arg(args, char*);
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
@@ -549,19 +538,18 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, ...)
       dprintf("ATC<%s> - ATC_Receive() MEM ERROR\r\n", hAtc->Name);
       for (uint8_t j = 0; j < i; j++)
       {
-        ATC_Free(hAtc->ppResp[j]);
+        ATC_Free((void**)&hAtc->ppResp[j]);
       }
-      ATC_Free(hAtc->ppResp);
       return ATC_RESP_MEM_ERROR;
     }
     strcpy((char*) hAtc->ppResp[i], arg);
   }
   va_end(args);
 
-  if (count > 0)
+  if (Items > 0)
   {
     uint32_t start_time = HAL_GetTick();
-    hAtc->RespCount = count;
+    hAtc->RespCount = Items;
     while (HAL_GetTick() - start_time < RxTimeout)
     {
       ATC_Delay(1);
@@ -579,11 +567,10 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, ...)
     }
   }
   hAtc->RespCount = 0;
-  for (uint8_t i = 0; i < count; i++)
+  for (uint8_t i = 0; i < Items; i++)
   {
-    ATC_Free(hAtc->ppResp[i]);
+    ATC_Free((void**)&hAtc->ppResp[i]);
   }
-  ATC_Free(hAtc->ppResp);
   return answer;
 }
 
