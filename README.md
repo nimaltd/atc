@@ -21,7 +21,9 @@
 ---
 # Watch the Video:
 
-Coming soon
+<div align="center">
+  <a href="https://www.youtube.com/watch?v=Wz_oWqmAEo8"><img src="https://img.youtube.com/vi/Wz_oWqmAEo8/0.jpg" alt="Video"></a>
+</div>
 
 ---
 The old Version: https://github.com/nimaltd/ATC/archive/refs/tags/3.0.3.zip 
