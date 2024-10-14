@@ -46,7 +46,7 @@ void              ATC_CheckErrors(ATC_HandleTypeDef* hAtc);
 void* ATC_Malloc(size_t size)
 {
   void *ptr = NULL;
-#if RTOS_CONFIG == ATC_RTOS_DISABLE
+#if ATC_RTOS == ATC_RTOS_DISABLE
   ptr = malloc(size);
 #elif (ATC_RTOS == ATC_RTOS_CMSIS_V1) || (ATC_RTOS == ATC_RTOS_CMSIS_V2)
   ptr = pvPortMalloc(size);
@@ -62,10 +62,10 @@ void ATC_Free(void** ptr)
 {
   if (ptr != NULL && *ptr != NULL)
   {
-#if RTOS_CONFIG == ATC_RTOS_DISABLE
+#if ATC_RTOS == ATC_RTOS_DISABLE
     free(*ptr);
 #elif (ATC_RTOS == ATC_RTOS_CMSIS_V1) || (ATC_RTOS == ATC_RTOS_CMSIS_V2)
-    vPortFree(ptr);
+    vPortFree(*ptr);
 #elif ATC_RTOS == ATC_RTOS_THREADX
     ??
 #endif
