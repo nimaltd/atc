@@ -9,9 +9,12 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.1.1
+  Version:    4.1.2
 
   History:
+              4.1.2
+              - Fixed Definitions
+              
               4.1.1
               - Fixed RX Items counter
 
