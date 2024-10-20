@@ -9,9 +9,14 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.1.2
+  Version:    4.2.0
 
   History:
+
+              4.2.0
+              - Fixed Returned response
+              - Added Temp Callback
+
               4.1.2
               - Fixed Definitions
               
@@ -90,12 +95,12 @@ typedef struct
 typedef struct
 {
   UART_HandleTypeDef*        hUart;
+  ATC_EventTypeDef*          psEvents;
   char                       Name[8];
   uint16_t                   Size;
   uint16_t                   RespCount;
   uint16_t                   RxIndex;
   uint16_t                   TxLen;
-  ATC_EventTypeDef*          sEvents;
   uint8_t*                   pRxBuff;
   uint8_t*                   pTxBuff;
   uint8_t*                   pReadBuff;
@@ -109,11 +114,11 @@ typedef struct
 
 bool    ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t BufferSize, const char* pName);
 void    ATC_DeInit(ATC_HandleTypeDef *hAtc);
-bool    ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* sEvents);
+bool    ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents);
 void    ATC_Loop(ATC_HandleTypeDef* hAtc);
-int     ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char* pResp, uint32_t RxTimeout, uint8_t Items, ...);
+int     ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char** ppResp, uint32_t RxTimeout, uint8_t Items, ...);
 bool    ATC_Send(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, ...);
-int     ATC_Receive(ATC_HandleTypeDef* hAtc, char* pResp, uint32_t RxTimeout, uint8_t Items, ...);
+int     ATC_Receive(ATC_HandleTypeDef* hAtc, char** ppResp, uint32_t RxTimeout, uint8_t Items, ...);
 
 void    ATC_IdleLineCallback(ATC_HandleTypeDef* hAtc, uint16_t Len);
 void    ATC_Delay(uint32_t Delay);

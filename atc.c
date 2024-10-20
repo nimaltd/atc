@@ -38,8 +38,19 @@ bool              ATC_TxRaw(ATC_HandleTypeDef* hAtc, const uint8_t* pData, uint1
 bool              ATC_TxBusy(ATC_HandleTypeDef* hAtc);
 bool              ATC_TxWait(ATC_HandleTypeDef* hAtc, uint32_t Timeout);
 void              ATC_CheckEvents(ATC_HandleTypeDef* hAtc);
-uint8_t           ATC_CheckResponse(ATC_HandleTypeDef* hAtc,const char* pFound);
+uint8_t           ATC_CheckResponse(ATC_HandleTypeDef* hAtc,char** ppFound);
 void              ATC_CheckErrors(ATC_HandleTypeDef* hAtc);
+void              ATC_TempCallback(const char *str);
+
+/************************************************************************************************************
+**************    Test Event Function
+************************************************************************************************************/
+
+const ATC_EventTypeDef atcTmpEvFn[] =
+{
+    {"waiting for this message", ATC_TempCallback},
+    {NULL, NULL}
+};
 
 /***********************************************************************************************************/
 
@@ -149,12 +160,12 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
   if (hAtc->RxIndex > 0)
   {
     uint16_t ev = 0;
-    while ((hAtc->sEvents[ev].Event != NULL) && (hAtc->sEvents[ev].EventCallback != NULL))
+    while ((hAtc->psEvents[ev].Event != NULL) && (hAtc->psEvents[ev].EventCallback != NULL))
     {
-      char *found = strstr((char*)hAtc->pReadBuff, hAtc->sEvents[ev].Event);
+      char *found = strstr((char*)hAtc->pReadBuff, hAtc->psEvents[ev].Event);
       if (found != NULL)
       {
-        hAtc->sEvents[ev].EventCallback(found);
+        hAtc->psEvents[ev].EventCallback(found);
       }
       ev++;
     }
@@ -164,7 +175,7 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
 
 /***********************************************************************************************************/
 
-uint8_t ATC_CheckResponse(ATC_HandleTypeDef* hAtc, const char* FoundPtr)
+uint8_t ATC_CheckResponse(ATC_HandleTypeDef* hAtc, char** ppFound)
 {
   uint8_t index = 0;
   if (hAtc->RxIndex > 0)
@@ -174,9 +185,9 @@ uint8_t ATC_CheckResponse(ATC_HandleTypeDef* hAtc, const char* FoundPtr)
       char *found = strstr((char*)hAtc->pReadBuff, (char*)hAtc->ppResp[i]);
       if (found != NULL)
       {
-        if (FoundPtr != NULL)
+        if (ppFound != NULL)
         {
-          FoundPtr = found;
+          *ppFound = found;
         }
         index = i + 1;
         break;
@@ -205,6 +216,13 @@ void ATC_CheckErrors(ATC_HandleTypeDef* hAtc)
     HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size);
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
   }
+}
+
+/***********************************************************************************************************/
+
+void ATC_TempCallback(const char *str)
+{
+  UNUSED(str);
 }
 
 /************************************************************************************************************
@@ -272,6 +290,7 @@ bool ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t Buffe
       break;
     }
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
+    ATC_SetEvents(hAtc, atcTmpEvFn);
     answer = true;
 
   } while (0);
@@ -326,10 +345,10 @@ void ATC_DeInit(ATC_HandleTypeDef* hAtc)
 /**
   * @brief  Sets the ATC event handlers.
   * @param  hAtc: Pointer to the ATC handle.
-  * @param  sEvents: Pointer to the event handler structure.
+  * @param  psEvents: Pointer to the event handler structure.
   * @retval true if events are set successfully, false otherwise.
   */
-bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* sEvents)
+bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents)
 {
   bool answer = false;
   do
@@ -338,11 +357,11 @@ bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* sEvents)
     {
       break;
     }
-    if (sEvents == NULL)
+    if (psEvents == NULL)
     {
       break;
     }
-    hAtc->sEvents = (ATC_EventTypeDef*)sEvents;
+    hAtc->psEvents = (ATC_EventTypeDef*)psEvents;
     answer = true;
 
   } while (0);
@@ -370,13 +389,13 @@ void ATC_Loop(ATC_HandleTypeDef* hAtc)
   * @param  hAtc: Pointer to the ATC handle.
   * @param  pCommand: Pointer to the command string.
   * @param  TxTimeout: Timeout for sending the command.
-  * @param  pResp: Pointer to the response buffer. It Can be NULL.
+  * @param  ppResp: Pointer to the response buffer. It Can be NULL.
   * @param  RxTimeout: Timeout for receiving the response.
   * @param  Items: Number of String for Searching
   * @param  ...: Variable arguments for expected responses.
   * @retval Response index if found, error code otherwise.
   */
-int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char* pResp, uint32_t RxTimeout, uint8_t Items, ...)
+int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char** ppResp, uint32_t RxTimeout, uint8_t Items, ...)
 {
   int answer = ATC_RESP_NOT_FOUND;
   if (ATC_TxBusy(hAtc) == true)
@@ -391,11 +410,10 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
   }
   ATC_CheckErrors(hAtc);
   va_list args;
-  char *arg;
   va_start(args, Items);
   for (int i = 0; i < Items; i++)
   {
-    arg = va_arg(args, char*);
+    char *arg = va_arg(args, char*);
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
     if (hAtc->ppResp[i] == NULL)
     {
@@ -407,6 +425,7 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
       return ATC_RESP_MEM_ERROR;
     }
     strcpy((char*) hAtc->ppResp[i], arg);
+    hAtc->ppResp[i][strlen(arg)] = 0;
   }
   va_end(args);
 
@@ -436,7 +455,7 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
     while (HAL_GetTick() - start_time < RxTimeout)
     {
       ATC_Delay(1);
-      uint8_t found_index = ATC_CheckResponse(hAtc, pResp);
+      uint8_t found_index = ATC_CheckResponse(hAtc, ppResp);
       if (found_index > 0)
       {
         dprintf("ATC<%s> - RX FOUND: %d\r\n", hAtc->Name, found_index);
@@ -511,13 +530,13 @@ bool ATC_Send(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout,
 /**
   * @brief  waiting for a response.
   * @param  hAtc: Pointer to the ATC handle.
-  * @param  pResp: Pointer to the response buffer. It Can be NULL.
+  * @param  ppResp: Pointer to the response buffer. It Can be NULL.
   * @param  RxTimeout: Timeout for sending the command.
   * @param  Items: Number of searching strings
   * @param  ...: Variable arguments for expected responses.
   * @retval Response index if found, error code otherwise.
   */
-int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, uint8_t Items, ...)
+int ATC_Receive(ATC_HandleTypeDef *hAtc, char **ppResp, uint32_t RxTimeout, uint8_t Items, ...)
 {
   int answer = ATC_RESP_NOT_FOUND;
   if (Items > ATC_RESP_MAX)
@@ -527,11 +546,10 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, uint8_
   }
   ATC_CheckErrors(hAtc);
   va_list args;
-  char *arg;
   va_start(args, Items);
   for (int i = 0; i < Items; i++)
   {
-    arg = va_arg(args, char*);
+    char *arg = va_arg(args, char*);
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
     if (hAtc->ppResp[i] == NULL)
     {
@@ -543,6 +561,7 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, uint8_
       return ATC_RESP_MEM_ERROR;
     }
     strcpy((char*) hAtc->ppResp[i], arg);
+    hAtc->ppResp[i][strlen(arg)] = 0;
   }
   va_end(args);
 
@@ -553,7 +572,7 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char *pResp, uint32_t RxTimeout, uint8_
     while (HAL_GetTick() - start_time < RxTimeout)
     {
       ATC_Delay(1);
-      uint8_t found_index = ATC_CheckResponse(hAtc, pResp);
+      uint8_t found_index = ATC_CheckResponse(hAtc, ppResp);
       if (found_index > 0)
       {
         dprintf("ATC<%s> - ATC_Receive() FOUND: %d\r\n", hAtc->Name, found_index);
