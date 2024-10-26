@@ -42,16 +42,6 @@ uint8_t           ATC_CheckResponse(ATC_HandleTypeDef* hAtc,char** ppFound);
 void              ATC_CheckErrors(ATC_HandleTypeDef* hAtc);
 void              ATC_TempCallback(const char *str);
 
-/************************************************************************************************************
-**************    Test Event Function
-************************************************************************************************************/
-
-const ATC_EventTypeDef atcTmpEvFn[] =
-{
-    {"waiting for this message", ATC_TempCallback},
-    {NULL, NULL}
-};
-
 /***********************************************************************************************************/
 
 void* ATC_Malloc(size_t size)
@@ -99,6 +89,14 @@ bool ATC_TxRaw(ATC_HandleTypeDef* hAtc, const uint8_t* Data, uint16_t Len)
   bool answer = false;
   do
   {
+#if ATC_DEBUG == ATC_DEBUG_ENABLE
+    dprintf("ATC<%s> - TX: ", hAtc->Name);
+    for (uint16_t i = 0 ; i < Len; i++)
+    {
+      dprintf("%c", Data[i]);
+    }
+    dprintf("\r\n");
+#endif
     hAtc->TxLen = Len;
     if (HAL_UART_Transmit_DMA(hAtc->hUart, Data, Len) != HAL_OK)
     {
@@ -159,15 +157,13 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
 {
   if (hAtc->RxIndex > 0)
   {
-    uint16_t ev = 0;
-    while ((hAtc->psEvents[ev].Event != NULL) && (hAtc->psEvents[ev].EventCallback != NULL))
+    for (uint32_t ev = 0; ev < hAtc->Events; ev++)
     {
       char *found = strstr((char*)hAtc->pReadBuff, hAtc->psEvents[ev].Event);
       if (found != NULL)
       {
         hAtc->psEvents[ev].EventCallback(found);
       }
-      ev++;
     }
     ATC_RxFlush(hAtc);
   }
@@ -290,7 +286,6 @@ bool ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t Buffe
       break;
     }
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
-    ATC_SetEvents(hAtc, atcTmpEvFn);
     answer = true;
 
   } while (0);
@@ -351,6 +346,7 @@ void ATC_DeInit(ATC_HandleTypeDef* hAtc)
 bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents)
 {
   bool answer = false;
+  uint32_t ev = 0;
   do
   {
     if (hAtc == NULL)
@@ -360,6 +356,10 @@ bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents)
     if (psEvents == NULL)
     {
       break;
+    }
+    while ((psEvents[ev].Event != NULL) && (psEvents[ev].EventCallback != NULL))
+    {
+      ev++;
     }
     hAtc->psEvents = (ATC_EventTypeDef*)psEvents;
     answer = true;
@@ -400,12 +400,10 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
   int answer = ATC_RESP_NOT_FOUND;
   if (ATC_TxBusy(hAtc) == true)
   {
-    dprintf("ATC<%s> - ATC_RESP_TX_BUSY\r\n", hAtc->Name);
     return ATC_RESP_TX_BUSY;
   }
   if (Items > ATC_RESP_MAX)
   {
-    dprintf("ATC<%s> - ATC_RESP_ITEMS\r\n", hAtc->Name);
     return ATC_RESP_ITEMS;
   }
   ATC_CheckErrors(hAtc);
@@ -417,7 +415,6 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
     if (hAtc->ppResp[i] == NULL)
     {
-      dprintf("ATC<%s> - ATC_RESP_MEM_ERROR\r\n", hAtc->Name);
       for (uint8_t j = 0; j < i; j++)
       {
         ATC_Free((void**)&hAtc->ppResp[j]);
@@ -431,17 +428,14 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
 
   do
   {
-    dprintf("ATC<%s> - TX: %s\r\n", hAtc->Name, pCommand);
     ATC_RxFlush(hAtc);
     if (ATC_TxRaw(hAtc, (const uint8_t*)pCommand, strlen((char*)pCommand)) == false)
     {
-      dprintf("ATC<%s> - ATC_RESP_SENDING_ERROR\r\n", hAtc->Name);
       answer = ATC_RESP_SENDING_ERROR;
       break;
     }
     if (ATC_TxWait(hAtc, TxTimeout) == false)
     {
-      dprintf("ATC<%s> - ATC_RESP_SENDING_TIMEOUT\r\n", hAtc->Name);
       answer = ATC_RESP_SENDING_TIMEOUT;
       break;
     }
@@ -458,14 +452,9 @@ int ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTi
       uint8_t found_index = ATC_CheckResponse(hAtc, ppResp);
       if (found_index > 0)
       {
-        dprintf("ATC<%s> - RX FOUND: %d\r\n", hAtc->Name, found_index);
         answer = found_index;
         break;
       }
-    }
-    if (answer == ATC_RESP_NOT_FOUND)
-    {
-      dprintf("ATC<%s> - RX NOT FOUND\r\n", hAtc->Name);
     }
   }
   hAtc->RespCount = 0;
@@ -493,7 +482,6 @@ bool ATC_Send(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout,
   {
     if (ATC_TxBusy(hAtc) == true)
     {
-      dprintf("ATC<%s> - ATC_Send() TX BUSY\r\n", hAtc->Name);
       break;
     }
     ATC_CheckErrors(hAtc);
@@ -503,19 +491,15 @@ bool ATC_Send(ATC_HandleTypeDef *hAtc, const char *pCommand, uint32_t TxTimeout,
     va_end(args);
     if ((len < 0) || (len > hAtc->Size))
     {
-      dprintf("ATC<%s> - ATC_Send() WRONG INPUT\r\n", hAtc->Name);
       break;
     }
-    dprintf("ATC<%s> - ATC_Send() => %s\r\n", hAtc->Name, pCommand);
     ATC_RxFlush(hAtc);
     if (ATC_TxRaw(hAtc, (const uint8_t*)hAtc->pTxBuff, strlen((char*)hAtc->pTxBuff)) == false)
     {
-      dprintf("ATC<%s> - ATC_Send() CANNOT SEND\r\n", hAtc->Name);
       break;
     }
     if (ATC_TxWait(hAtc, TxTimeout) == false)
     {
-      dprintf("ATC<%s> - ATC_Send() TIMEOUT\r\n", hAtc->Name);
       break;
     }
     answer = true;
@@ -541,7 +525,6 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char **ppResp, uint32_t RxTimeout, uint
   int answer = ATC_RESP_NOT_FOUND;
   if (Items > ATC_RESP_MAX)
   {
-    dprintf("ATC<%s> - ATC_RESP_ITEMS\r\n", hAtc->Name);
     return ATC_RESP_ITEMS;
   }
   ATC_CheckErrors(hAtc);
@@ -553,7 +536,6 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char **ppResp, uint32_t RxTimeout, uint
     hAtc->ppResp[i] = (uint8_t*) ATC_Malloc(strlen(arg) + 1);
     if (hAtc->ppResp[i] == NULL)
     {
-      dprintf("ATC<%s> - ATC_Receive() MEM ERROR\r\n", hAtc->Name);
       for (uint8_t j = 0; j < i; j++)
       {
         ATC_Free((void**)&hAtc->ppResp[j]);
@@ -575,14 +557,9 @@ int ATC_Receive(ATC_HandleTypeDef *hAtc, char **ppResp, uint32_t RxTimeout, uint
       uint8_t found_index = ATC_CheckResponse(hAtc, ppResp);
       if (found_index > 0)
       {
-        dprintf("ATC<%s> - ATC_Receive() FOUND: %d\r\n", hAtc->Name, found_index);
         answer = found_index;
         break;
       }
-    }
-    if (answer == ATC_RESP_NOT_FOUND)
-    {
-      dprintf("ATC<%s> - ATC_Receive() NOT FOUND\r\n", hAtc->Name);
     }
   }
   hAtc->RespCount = 0;
@@ -608,6 +585,14 @@ inline void ATC_IdleLineCallback(ATC_HandleTypeDef* hAtc, uint16_t Len)
     Len = hAtc->Size - hAtc->RxIndex;
   }
   memcpy(&hAtc->pReadBuff[hAtc->RxIndex], hAtc->pRxBuff, Len);
+#if ATC_DEBUG == ATC_DEBUG_ENABLE
+  dprintf("ATC<%s> - RX: ", hAtc->Name);
+  for (int i = 0; i < Len; i++)
+  {
+    dprintf("%c", hAtc->pRxBuff[i]);
+  }
+  dprintf("\r\n");
+#endif
   hAtc->RxIndex += Len;
   if (HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size) == HAL_OK)
   {
@@ -619,7 +604,6 @@ inline void ATC_IdleLineCallback(ATC_HandleTypeDef* hAtc, uint16_t Len)
     HAL_UART_AbortReceive(hAtc->hUart);
     HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size);
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
-    dprintf("ATC<%s> - ERROR ENABLE RX DMA\r\n", hAtc->Name);
   }
 }
 
