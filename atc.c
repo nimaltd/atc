@@ -362,6 +362,7 @@ bool ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents)
       ev++;
     }
     hAtc->psEvents = (ATC_EventTypeDef*)psEvents;
+    hAtc->Events = ev;
     answer = true;
 
   } while (0);

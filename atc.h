@@ -9,10 +9,13 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.2.1
+  Version:    4.2.2
 
   History:
 
+              4.2.2
+              - Fixed SetEvent
+			  
               4.2.1
               - Fixed Debug print
               - Removed Temp Callback :)
