@@ -67,6 +67,21 @@ extern "C"
 #include <stdlib.h>
 #include <stdarg.h>
 
+#define ATC_DEBUG_DISABLE                    0
+#define ATC_DEBUG_ENABLE                     1
+
+#define ATC_RTOS_DISABLE                     0
+#define ATC_RTOS_CMSIS_V1                    1
+#define ATC_RTOS_CMSIS_V2                    2
+#define ATC_RTOS_THREADX                     3
+
+/*---------- ATC_DEBUG  -----------*/
+#define ATC_DEBUG      ATC_RTOS_DISABLE
+
+/*---------- ATC_RTOS  -----------*/
+#define ATC_RTOS      ATC_RTOS_DISABLE
+
+
 #if ATC_RTOS == ATC_RTOS_DISABLE
 #elif ATC_RTOS == ATC_RTOS_CMSIS_V1
 #include "cmsis_os.h"
@@ -77,6 +92,8 @@ extern "C"
 #elif ATC_RTOS == ATC_RTOS_THREADX
 #include "app_threadx.h"
 #endif
+
+#define ATC_RESP_MAX_LEN 256
 
 /************************************************************************************************************
 **************    Public Definitions
