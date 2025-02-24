@@ -64,6 +64,21 @@ extern "C"
 #include <stdlib.h>
 #include <stdarg.h>
 
+#define ATC_DEBUG_DISABLE                    0
+#define ATC_DEBUG_ENABLE                     1
+
+#define ATC_RTOS_DISABLE                     0
+#define ATC_RTOS_CMSIS_V1                    1
+#define ATC_RTOS_CMSIS_V2                    2
+#define ATC_RTOS_THREADX                     3
+
+/*---------- ATC_DEBUG  -----------*/
+#define ATC_DEBUG      ATC_RTOS_DISABLE
+
+/*---------- ATC_RTOS  -----------*/
+#define ATC_RTOS      ATC_RTOS_DISABLE
+
+
 #if ATC_RTOS == ATC_RTOS_DISABLE
 #elif ATC_RTOS == ATC_RTOS_CMSIS_V1
 #include "cmsis_os.h"
@@ -74,6 +89,8 @@ extern "C"
 #elif ATC_RTOS == ATC_RTOS_THREADX
 #include "app_threadx.h"
 #endif
+
+#define ATC_RESP_MAX_LEN 256
 
 /************************************************************************************************************
 **************    Public Definitions
@@ -92,6 +109,11 @@ extern "C"
 **************    Public struct/enum
 ************************************************************************************************************/
 
+typedef struct {
+  const char* cmd_prefix;      // Command prefix (e.g., "AT+LED=")
+  void (*cmd_handler)(const char* args, char* response); 
+} ATC_CmdTypeDef;
+
 typedef struct
 {
   char*                      Event;
@@ -104,7 +126,9 @@ typedef struct
   UART_HandleTypeDef*        hUart;
   char                       Name[8];
   ATC_EventTypeDef*          psEvents;
-  uint32_t                   Events;
+  uint32_t                   EventCount;
+	ATC_CmdTypeDef*            psCmds;     
+  uint32_t                   CmdCount;  
   uint16_t                   Size;
   uint16_t                   RespCount;
   uint16_t                   RxIndex;
@@ -123,6 +147,7 @@ typedef struct
 bool    ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t BufferSize, const char* pName);
 void    ATC_DeInit(ATC_HandleTypeDef* hAtc);
 bool    ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents);
+bool    ATC_SetCommands(ATC_HandleTypeDef* hAtc, const ATC_CmdTypeDef* psCmds);
 void    ATC_Loop(ATC_HandleTypeDef* hAtc);
 int     ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char** ppResp, uint32_t RxTimeout, uint8_t Items, ...);
 bool    ATC_Send(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, ...);
