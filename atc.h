@@ -9,9 +9,12 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.2.2
+  Version:    4.3.0
 
   History:
+
+              4.3.0
+              - Added Command callback
 
               4.2.2
               - Fixed SetEvent
@@ -109,9 +112,11 @@ extern "C"
 **************    Public struct/enum
 ************************************************************************************************************/
 
-typedef struct {
-  const char* cmd_prefix;      // Command prefix (e.g., "AT+LED=")
-  void (*cmd_handler)(const char* args, char* response); 
+typedef struct
+{
+  char*                      pCmd;
+  void                       (*CmdCallback)(const char* args, char* response); 
+
 } ATC_CmdTypeDef;
 
 typedef struct
@@ -127,7 +132,7 @@ typedef struct
   char                       Name[8];
   ATC_EventTypeDef*          psEvents;
   uint32_t                   EventCount;
-	ATC_CmdTypeDef*            psCmds;     
+  ATC_CmdTypeDef*            psCmds;     
   uint32_t                   CmdCount;  
   uint16_t                   Size;
   uint16_t                   RespCount;
