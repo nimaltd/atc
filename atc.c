@@ -177,7 +177,6 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
         break;
       }
     }
-
     // 2. If no command matched, check for events (original behavior)
     if (!command_processed)
     {
@@ -192,16 +191,13 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
         }
       }
     }
-
     if ((!command_processed) && (!event_processed))
     {
       snprintf((char*) hAtc->pTxBuff, hAtc->Size, "%s\r\n", "+ERROR");
       ATC_TxRaw(hAtc, hAtc->pTxBuff, strlen((char*) hAtc->pTxBuff));
     }
-
     ATC_RxFlush(hAtc); // Clear buffer after processing
   }
-
   if (hAtc->RxIndex > 0)
   {
     char* rx_data = (char*)hAtc->pReadBuff;
@@ -224,28 +220,25 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
         break;
       }
     }
-
     // 2. If no command matched, check for events (original behavior)
     if (!command_processed)
-	{
+    {
       for (uint32_t ev = 0; ev < hAtc->EventCount; ev++)
       {
         char *found = strstr(rx_data, hAtc->psEvents[ev].Event);
         if (found != NULL)
         {
           hAtc->psEvents[ev].EventCallback(found);
-		  event_processed = true;
+          event_processed = true;
           break;
         }
       }
-    }
-		
+    }		
     if((!command_processed) && (!event_processed))
-	{
+    {
       snprintf((char*)hAtc->pTxBuff, hAtc->Size, "%s\r\n", "+ERROR");
       ATC_TxRaw(hAtc, hAtc->pTxBuff, strlen((char*)hAtc->pTxBuff));
     }
-
     ATC_RxFlush(hAtc); // Clear buffer after processing
   }
 }
