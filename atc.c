@@ -153,21 +153,23 @@ bool ATC_TxWait(ATC_HandleTypeDef* hAtc, uint32_t Timeout)
 
 /***********************************************************************************************************/
 
-void ATC_CheckEvents(ATC_HandleTypeDef* hAtc) {
-  if (hAtc->RxIndex > 0) {
+void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
+{
+  if (hAtc->RxIndex > 0)
+  {
     char* rx_data = (char*)hAtc->pReadBuff;
     bool command_processed = false;
-		bool event_processed = false;
-
+    bool event_processed = false;
     // 1. Check for AT commands first
-    for (uint32_t i = 0; i < hAtc->CmdCount; i++) {
+    for (uint32_t i = 0; i < hAtc->CmdCount; i++)
+    {
       const char* prefix = hAtc->psCmds[i].cmd_prefix;
-      if (strncmp(rx_data, prefix, strlen(prefix)) == 0) {
+      if (strncmp(rx_data, prefix, strlen(prefix)) == 0)
+      {
         // Extract arguments (e.g., "ON" from "AT+LED=ON")
         const char* args = rx_data + strlen(prefix);
         char response[64];
-        hAtc->psCmds[i].cmd_handler(args, response);
-        
+        hAtc->psCmds[i].cmd_handler(args, response);  
         // Send response (use TX buffer)
         snprintf((char*)hAtc->pTxBuff, hAtc->Size, "%s\r\n", response);
         ATC_TxRaw(hAtc, hAtc->pTxBuff, strlen((char*)hAtc->pTxBuff));
