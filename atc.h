@@ -9,9 +9,12 @@
   Youtube:    https://www.youtube.com/@nimaltd
   Instagram:  https://instagram.com/github.NimaLTD
 
-  Version:    4.2.2
+  Version:    4.3.0
 
   History:
+
+              4.3.0
+              - Added Command callback
 
               4.2.2
               - Fixed SetEvent
@@ -94,6 +97,13 @@ extern "C"
 
 typedef struct
 {
+  char*                      pCmd;
+  void                       (*CmdCallback)(const char* args, char* response); 
+
+} ATC_CmdTypeDef;
+
+typedef struct
+{
   char*                      Event;
   void                       (*EventCallback)(const char*);
 
@@ -104,7 +114,9 @@ typedef struct
   UART_HandleTypeDef*        hUart;
   char                       Name[8];
   ATC_EventTypeDef*          psEvents;
-  uint32_t                   Events;
+  uint32_t                   EventCount;
+  ATC_CmdTypeDef*            psCmds;     
+  uint32_t                   CmdCount;  
   uint16_t                   Size;
   uint16_t                   RespCount;
   uint16_t                   RxIndex;
@@ -123,6 +135,7 @@ typedef struct
 bool    ATC_Init(ATC_HandleTypeDef* hAtc, UART_HandleTypeDef* hUart, uint16_t BufferSize, const char* pName);
 void    ATC_DeInit(ATC_HandleTypeDef* hAtc);
 bool    ATC_SetEvents(ATC_HandleTypeDef* hAtc, const ATC_EventTypeDef* psEvents);
+bool    ATC_SetCommands(ATC_HandleTypeDef* hAtc, const ATC_CmdTypeDef* psCmds);
 void    ATC_Loop(ATC_HandleTypeDef* hAtc);
 int     ATC_SendReceive(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, char** ppResp, uint32_t RxTimeout, uint8_t Items, ...);
 bool    ATC_Send(ATC_HandleTypeDef* hAtc, const char* pCommand, uint32_t TxTimeout, ...);
