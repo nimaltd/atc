@@ -53,32 +53,39 @@ Control an LED and query its state via AT commands:
 
 ```c
 #include "atc.h"
-#include "stm32f1xx_hal.h" // Adjust for your STM32 series
 
 // ATC handle
 ATC_HandleTypeDef hAtc;
 
 // Command handler for setting LED state
-void Handle_LED(const char* args, char* response) {
-  if (strcmp(args, "ON") == 0) {
+void Handle_LED(const char* args, char* response)
+{
+  if (strcmp(args, "ON") == 0)
+  {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_SET); // Adjust port/pin
     strcpy(response, "+OK");
-  } else if (strcmp(args, "OFF") == 0) {
+  }
+  else if (strcmp(args, "OFF") == 0)
+  {
     HAL_GPIO_WritePin(GPIOA, GPIO_PIN_5, GPIO_PIN_RESET);
     strcpy(response, "+OK");
-  } else {
+  }
+  else
+  {
     strcpy(response, "+ERROR");
   }
 }
 
 // Command handler for querying LED state
-void Handle_GetLED(const char* args, char* response) {
+void Handle_GetLED(const char* args, char* response)
+{
   GPIO_PinState led_state = HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_5);
   strcpy(response, (led_state == GPIO_PIN_SET) ? "+LED:ON" : "+LED:OFF");
 }
 
 // Command table
-ATC_CmdTypeDef at_commands[] = {
+ATC_CmdTypeDef at_commands[] =
+{
   {"AT+LED?", Handle_GetLED},  // Query LED state: "AT+LED?" -> "+LED:ON"
   {"AT+LED=", Handle_LED},     // Set LED state: "AT+LED=ON" -> "+OK"
   {NULL, NULL}                 // Terminator
@@ -87,7 +94,8 @@ ATC_CmdTypeDef at_commands[] = {
 // UART handle (from STM32CubeMX)
 extern UART_HandleTypeDef huart1;
 
-int main(void) {
+int main(void)
+{
   // HAL initialization (from STM32CubeMX)
   HAL_Init();
   SystemClock_Config();
@@ -101,14 +109,16 @@ int main(void) {
   // Register AT commands
   ATC_SetCommands(&hAtc, at_commands);
 
-  while (1) {
+  while (1)
+  {
     ATC_Loop(&hAtc); // Process commands and events
   }
 }
 
 // Add to your UART IRQ handler (e.g., stm32f1xx_it.c)
 void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
-  if (huart->Instance == USART1) { // Adjust for your UART instance
+  if (huart->Instance == USART1)
+  { // Adjust for your UART instance
     ATC_IdleLineCallback(&hAtc, Size);
   }
 }
