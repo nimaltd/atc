@@ -40,7 +40,6 @@ bool              ATC_TxWait(ATC_HandleTypeDef* hAtc, uint32_t Timeout);
 void              ATC_CheckEvents(ATC_HandleTypeDef* hAtc);
 uint8_t           ATC_CheckResponse(ATC_HandleTypeDef* hAtc,char** ppFound);
 void              ATC_CheckErrors(ATC_HandleTypeDef* hAtc);
-void              ATC_TempCallback(const char *str);
 
 /***********************************************************************************************************/
 
@@ -198,49 +197,6 @@ void ATC_CheckEvents(ATC_HandleTypeDef* hAtc)
     }
     ATC_RxFlush(hAtc); // Clear buffer after processing
   }
-  if (hAtc->RxIndex > 0)
-  {
-    char* rx_data = (char*)hAtc->pReadBuff;
-    bool command_processed = false;
-    bool event_processed = false;
-    // 1. Check for AT commands first
-    for (uint32_t i = 0; i < hAtc->CmdCount; i++)
-    {
-      const char* prefix = hAtc->psCmds[i].cmd_prefix;
-      if (strncmp(rx_data, prefix, strlen(prefix)) == 0)
-      {
-        // Extract arguments (e.g., "ON" from "AT+LED=ON")
-        const char* args = rx_data + strlen(prefix);
-        char response[64];
-        hAtc->psCmds[i].cmd_handler(args, response);  
-        // Send response (use TX buffer)
-        snprintf((char*)hAtc->pTxBuff, hAtc->Size, "%s\r\n", response);
-        ATC_TxRaw(hAtc, hAtc->pTxBuff, strlen((char*)hAtc->pTxBuff));
-        command_processed = true;
-        break;
-      }
-    }
-    // 2. If no command matched, check for events (original behavior)
-    if (!command_processed)
-    {
-      for (uint32_t ev = 0; ev < hAtc->EventCount; ev++)
-      {
-        char *found = strstr(rx_data, hAtc->psEvents[ev].Event);
-        if (found != NULL)
-        {
-          hAtc->psEvents[ev].EventCallback(found);
-          event_processed = true;
-          break;
-        }
-      }
-    }		
-    if((!command_processed) && (!event_processed))
-    {
-      snprintf((char*)hAtc->pTxBuff, hAtc->Size, "%s\r\n", "+ERROR");
-      ATC_TxRaw(hAtc, hAtc->pTxBuff, strlen((char*)hAtc->pTxBuff));
-    }
-    ATC_RxFlush(hAtc); // Clear buffer after processing
-  }
 }
 
 /***********************************************************************************************************/
@@ -286,13 +242,6 @@ void ATC_CheckErrors(ATC_HandleTypeDef* hAtc)
     HAL_UARTEx_ReceiveToIdle_DMA(hAtc->hUart, hAtc->pRxBuff, hAtc->Size);
     __HAL_DMA_DISABLE_IT(hAtc->hUart->hdmarx, DMA_IT_HT);
   }
-}
-
-/***********************************************************************************************************/
-
-void ATC_TempCallback(const char *str)
-{
-  UNUSED(str);
 }
 
 /************************************************************************************************************
