@@ -76,7 +76,7 @@ extern "C"
 #define ATC_RTOS_THREADX                     3
 
 /*---------- ATC_DEBUG  -----------*/
-#define ATC_DEBUG      ATC_RTOS_DISABLE
+#define ATC_DEBUG      ATC_DEBUG_DISABLE
 
 /*---------- ATC_RTOS  -----------*/
 #define ATC_RTOS      ATC_RTOS_DISABLE
